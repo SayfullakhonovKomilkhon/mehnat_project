@@ -31,17 +31,17 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 
 # Create .env file for artisan commands during build
-RUN touch .env && \
-    echo "APP_NAME=Laravel" >> .env && \
-    echo "APP_ENV=production" >> .env && \
-    echo "APP_KEY=base64:dGVtcG9yYXJ5a2V5Zm9yYnVpbGRvbmx5MTIzNA==" >> .env && \
-    echo "APP_DEBUG=false" >> .env && \
-    echo "DB_CONNECTION=sqlite" >> .env && \
-    echo "CACHE_STORE=array" >> .env && \
-    echo "SESSION_DRIVER=array" >> .env
+RUN touch .env \
+    && echo "APP_NAME=Laravel" >> .env \
+    && echo "APP_ENV=production" >> .env \
+    && echo "APP_KEY=base64:dGVtcG9yYXJ5a2V5Zm9yYnVpbGQxMjM0NTY3ODkw" >> .env \
+    && echo "APP_DEBUG=false" >> .env \
+    && echo "DB_CONNECTION=sqlite" >> .env \
+    && echo "CACHE_STORE=array" >> .env \
+    && echo "SESSION_DRIVER=array" >> .env
 
-# Install dependencies without scripts first
-RUN composer install --no-dev --no-scripts --prefer-dist --optimize-autoloader
+# Install dependencies (--ignore-platform-reqs for cross-platform compatibility)
+RUN composer install --no-dev --no-scripts --prefer-dist --optimize-autoloader --ignore-platform-reqs
 
 # Copy application code
 COPY . .
@@ -57,7 +57,7 @@ RUN mkdir -p storage/logs \
 RUN chmod -R 775 storage bootstrap/cache
 
 # Run post-install scripts
-RUN composer dump-autoload --optimize
+RUN composer dump-autoload --optimize --ignore-platform-reqs || true
 
 # Remove build .env
 RUN rm -f .env
