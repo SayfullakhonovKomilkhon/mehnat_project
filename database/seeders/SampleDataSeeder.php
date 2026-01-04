@@ -40,31 +40,40 @@ class SampleDataSeeder extends Seeder
         $moderatorRole = Role::where('slug', Role::MODERATOR)->first();
         $userRole = Role::where('slug', Role::USER)->first();
 
-        // Create moderator
-        User::create([
-            'name' => 'Moderator User',
-            'email' => 'moderator@mehnat-kodeksi.uz',
-            'password' => Hash::make('ModeratorPass123!'),
-            'role_id' => $moderatorRole->id,
-            'email_verified_at' => now(),
-            'is_active' => true,
-            'preferred_locale' => 'ru',
-        ]);
+        if (!$moderatorRole || !$userRole) {
+            $this->command->warn('  Roles not found, skipping user creation');
+            return;
+        }
+
+        // Create moderator (use firstOrCreate to avoid duplicates)
+        User::firstOrCreate(
+            ['email' => 'moderator@mehnat-kodeksi.uz'],
+            [
+                'name' => 'Moderator User',
+                'password' => Hash::make('ModeratorPass123!'),
+                'role_id' => $moderatorRole->id,
+                'email_verified_at' => now(),
+                'is_active' => true,
+                'preferred_locale' => 'ru',
+            ]
+        );
 
         // Create regular users
         for ($i = 1; $i <= 5; $i++) {
-            User::create([
-                'name' => "Test User {$i}",
-                'email' => "user{$i}@example.com",
-                'password' => Hash::make('UserPass123!'),
-                'role_id' => $userRole->id,
-                'email_verified_at' => now(),
-                'is_active' => true,
-                'preferred_locale' => ['uz', 'ru', 'en'][array_rand(['uz', 'ru', 'en'])],
-            ]);
+            User::firstOrCreate(
+                ['email' => "user{$i}@example.com"],
+                [
+                    'name' => "Test User {$i}",
+                    'password' => Hash::make('UserPass123!'),
+                    'role_id' => $userRole->id,
+                    'email_verified_at' => now(),
+                    'is_active' => true,
+                    'preferred_locale' => ['uz', 'ru', 'en'][array_rand(['uz', 'ru', 'en'])],
+                ]
+            );
         }
 
-        $this->command->info('  Created 6 sample users');
+        $this->command->info('  Created/verified 6 sample users');
     }
 
     /**
@@ -72,6 +81,12 @@ class SampleDataSeeder extends Seeder
      */
     private function createSampleContent(): void
     {
+        // Check if sections already exist
+        if (Section::count() > 0) {
+            $this->command->info('  Sections already exist, skipping content creation');
+            return;
+        }
+
         // Section 1: General Provisions
         $section1 = Section::create([
             'order_number' => 1,
@@ -218,8 +233,19 @@ class SampleDataSeeder extends Seeder
      */
     private function createSampleComments(): void
     {
+        // Check if comments already exist
+        if (Comment::count() > 0) {
+            $this->command->info('  Comments already exist, skipping');
+            return;
+        }
+
         $users = User::where('email', 'like', 'user%@example.com')->get();
         $articles = Article::all();
+
+        if ($users->isEmpty() || $articles->isEmpty()) {
+            $this->command->warn('  No users or articles found, skipping comments');
+            return;
+        }
 
         foreach ($articles as $article) {
             // Create 2-5 comments per article
@@ -236,20 +262,6 @@ class SampleDataSeeder extends Seeder
                     'likes_count' => rand(0, 50),
                 ]);
             }
-        }
-
-        // Create some pending comments
-        for ($i = 0; $i < 10; $i++) {
-            $user = $users->random();
-            $article = $articles->random();
-            
-            Comment::create([
-                'article_id' => $article->id,
-                'user_id' => $user->id,
-                'content' => $this->getRandomComment(),
-                'status' => Comment::STATUS_PENDING,
-                'likes_count' => 0,
-            ]);
         }
 
         $this->command->info('  Created sample comments');
@@ -276,6 +288,3 @@ class SampleDataSeeder extends Seeder
         return $comments[array_rand($comments)];
     }
 }
-
-
-
