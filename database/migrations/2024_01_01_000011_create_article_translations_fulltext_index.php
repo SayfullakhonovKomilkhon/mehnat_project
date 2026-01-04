@@ -37,12 +37,13 @@ return new class extends Migration
             $$ LANGUAGE plpgsql;
         ");
         
-        // Create trigger to auto-update search vector
+        // Create trigger to auto-update search vector (split into separate statements)
+        DB::statement('DROP TRIGGER IF EXISTS article_translations_search_update ON article_translations');
+        
         DB::statement('
-            DROP TRIGGER IF EXISTS article_translations_search_update ON article_translations;
             CREATE TRIGGER article_translations_search_update
             BEFORE INSERT OR UPDATE ON article_translations
-            FOR EACH ROW EXECUTE FUNCTION update_article_search_vector();
+            FOR EACH ROW EXECUTE FUNCTION update_article_search_vector()
         ');
     }
 
