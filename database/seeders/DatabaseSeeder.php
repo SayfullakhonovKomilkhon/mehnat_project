@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             AdminUserSeeder::class,
-            // SampleDataSeeder::class, // Uncomment for test data
+            SampleDataSeeder::class, // Sample data for sections, chapters, articles
         ]);
     }
 }
