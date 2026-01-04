@@ -1,0 +1,40 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Shell scripts must use LF line endings (for Docker/Linux)
+*.sh text eol=lf
+docker/entrypoint.sh text eol=lf
+
+# PHP files
+*.php text
+
+# Config files
+*.json text
+*.xml text
+*.yml text
+*.yaml text
+*.ini text
+
+# Web files
+*.css text
+*.js text
+*.html text
+
+# Documentation
+*.md text
+
+# Batch files (Windows)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.gz binary
+*.tar binary
+*.pdf binary
+
