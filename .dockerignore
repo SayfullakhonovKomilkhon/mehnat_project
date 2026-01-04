@@ -8,33 +8,39 @@
 .vscode
 *.swp
 *.swo
+.cursor
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Environment
+# Environment (will be set via Render dashboard)
 .env
 .env.local
 .env.*.local
+.env.backup
 
 # Logs
 *.log
 storage/logs/*
 
-# Cache (will be rebuilt)
+# Cache (will be rebuilt in container)
 bootstrap/cache/*
 !bootstrap/cache/.gitignore
+
+# Vendor (will be installed fresh in container)
+vendor
 
 # Testing
 tests
 phpunit.xml
 .phpunit.result.cache
 
-# Development
+# Development files
 docker-compose*.yml
 *.md
 !README.md
+!DEPLOY_RENDER.md
 
 # Node (if any frontend assets)
 node_modules
@@ -42,7 +48,11 @@ npm-debug.log
 
 # SQLite (local development database)
 database/*.sqlite
+database/*.sqlite-journal
 
 # Memory bank (documentation)
 memory-bank
+
+# Render config (not needed in container)
+render.yaml
 
