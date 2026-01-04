@@ -1,0 +1,73 @@
+# Render Blueprint - Laravel Backend for Mehnat Kodeksi
+# https://render.com/docs/blueprint-spec
+
+services:
+  # Laravel Web Service
+  - type: web
+    name: mehnat-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    repo: https://github.com/YOUR_USERNAME/mehnat_new  # Замените на ваш репозиторий
+    branch: main
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: APP_NAME
+        value: "Mehnat Kodeksi API"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_URL
+        fromService:
+          name: mehnat-api
+          type: web
+          property: host
+      - key: APP_KEY
+        generateValue: true
+      - key: LOG_CHANNEL
+        value: stack
+      - key: LOG_LEVEL
+        value: error
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mehnat-db
+          property: connectionString
+      - key: CACHE_STORE
+        value: file
+      - key: SESSION_DRIVER
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: BROADCAST_DRIVER
+        value: log
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: SESSION_LIFETIME
+        value: "120"
+      - key: BCRYPT_ROUNDS
+        value: "12"
+      - key: APP_LOCALE
+        value: uz
+      - key: APP_FALLBACK_LOCALE
+        value: uz
+      - key: APP_AVAILABLE_LOCALES
+        value: uz,ru,en
+      - key: SANCTUM_STATEFUL_DOMAINS
+        sync: false
+      - key: SESSION_DOMAIN
+        sync: false
+      - key: SEED_DATABASE
+        value: "true"  # Установите "false" после первого деплоя
+
+databases:
+  # PostgreSQL Database
+  - name: mehnat-db
+    plan: free  # Бесплатно 90 дней, потом $7/мес
+    databaseName: mehnat_kodeksi
+    user: mehnat_user
+    ipAllowList: []  # Разрешить все IP
+

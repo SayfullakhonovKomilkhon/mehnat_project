@@ -1,0 +1,48 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+storage/logs/*
+
+# Cache (will be rebuilt)
+bootstrap/cache/*
+!bootstrap/cache/.gitignore
+
+# Testing
+tests
+phpunit.xml
+.phpunit.result.cache
+
+# Development
+docker-compose*.yml
+*.md
+!README.md
+
+# Node (if any frontend assets)
+node_modules
+npm-debug.log
+
+# SQLite (local development database)
+database/*.sqlite
+
+# Memory bank (documentation)
+memory-bank
+

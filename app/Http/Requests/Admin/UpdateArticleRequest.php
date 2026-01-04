@@ -1,0 +1,66 @@
+<?php
+
+namespace App\Http\Requests\Admin;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class UpdateArticleRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return $this->user()->isAdminOrModerator();
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        $articleId = $this->route('article') ?? $this->route('id');
+
+        return [
+            'chapter_id' => ['sometimes', 'integer', 'exists:chapters,id'],
+            'article_number' => [
+                'sometimes',
+                'string',
+                'max:20',
+                'regex:/^[0-9]+(-[0-9]+)?$/',
+                Rule::unique('articles', 'article_number')->ignore($articleId),
+            ],
+            'order_number' => ['sometimes', 'integer', 'min:0'],
+            'is_active' => ['sometimes', 'boolean'],
+            
+            // Translations
+            'translations' => ['sometimes', 'array', 'min:1'],
+            'translations.uz' => ['sometimes', 'array'],
+            'translations.uz.title' => ['required_with:translations.uz', 'string', 'max:500'],
+            'translations.uz.content' => ['required_with:translations.uz', 'string'],
+            'translations.uz.summary' => ['nullable', 'string', 'max:1000'],
+            'translations.uz.keywords' => ['nullable', 'array'],
+            'translations.uz.keywords.*' => ['string', 'max:100'],
+            
+            'translations.ru' => ['sometimes', 'array'],
+            'translations.ru.title' => ['required_with:translations.ru', 'string', 'max:500'],
+            'translations.ru.content' => ['required_with:translations.ru', 'string'],
+            'translations.ru.summary' => ['nullable', 'string', 'max:1000'],
+            'translations.ru.keywords' => ['nullable', 'array'],
+            'translations.ru.keywords.*' => ['string', 'max:100'],
+            
+            'translations.en' => ['sometimes', 'array'],
+            'translations.en.title' => ['required_with:translations.en', 'string', 'max:500'],
+            'translations.en.content' => ['required_with:translations.en', 'string'],
+            'translations.en.summary' => ['nullable', 'string', 'max:1000'],
+            'translations.en.keywords' => ['nullable', 'array'],
+            'translations.en.keywords.*' => ['string', 'max:100'],
+        ];
+    }
+}
+
+
+
