@@ -9,6 +9,7 @@ use App\Models\Section;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class SectionController extends Controller
 {
@@ -20,15 +21,24 @@ class SectionController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $locale = app()->getLocale();
-        $cacheKey = "sections.all.{$locale}";
+        try {
+            $locale = app()->getLocale();
+            $cacheKey = "sections.all.{$locale}";
 
-        $sections = Cache::remember($cacheKey, now()->addHour(), function () {
-            return Section::active()
+            $sections = Cache::remember($cacheKey, now()->addHour(), function () {
+                return Section::active()
+                    ->ordered()
+                    ->with(['translations', 'chapters' => fn ($q) => $q->active()->ordered()])
+                    ->get();
+            });
+        } catch (\Exception $e) {
+            // Cache failed, query directly
+            Log::warning('Cache unavailable: ' . $e->getMessage());
+            $sections = Section::active()
                 ->ordered()
                 ->with(['translations', 'chapters' => fn ($q) => $q->active()->ordered()])
                 ->get();
-        });
+        }
 
         return $this->success(SectionResource::collection($sections));
     }
@@ -41,14 +51,22 @@ class SectionController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $locale = app()->getLocale();
-        $cacheKey = "sections.{$id}.{$locale}";
+        try {
+            $locale = app()->getLocale();
+            $cacheKey = "sections.{$id}.{$locale}";
 
-        $section = Cache::remember($cacheKey, now()->addHour(), function () use ($id) {
-            return Section::active()
+            $section = Cache::remember($cacheKey, now()->addHour(), function () use ($id) {
+                return Section::active()
+                    ->with(['translations', 'chapters' => fn ($q) => $q->active()->ordered()->with('translations')])
+                    ->find($id);
+            });
+        } catch (\Exception $e) {
+            // Cache failed, query directly
+            Log::warning('Cache unavailable: ' . $e->getMessage());
+            $section = Section::active()
                 ->with(['translations', 'chapters' => fn ($q) => $q->active()->ordered()->with('translations')])
                 ->find($id);
-        });
+        }
 
         if (!$section) {
             return $this->error(__('messages.not_found'), 'NOT_FOUND', 404);
