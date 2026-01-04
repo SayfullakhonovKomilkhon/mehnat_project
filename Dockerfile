@@ -1,7 +1,7 @@
 # Dockerfile for Laravel on Render
 FROM php:8.2-fpm
 
-# Set environment variables
+# Set environment variables for build
 ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV COMPOSER_MEMORY_LIMIT=-1
 
@@ -42,36 +42,31 @@ RUN mkdir -p storage/logs \
     && mkdir -p storage/framework/cache \
     && mkdir -p bootstrap/cache
 
-# Copy composer files first for better caching
-COPY composer.json composer.lock ./
-
-# Install PHP dependencies (ignore platform reqs for build stage)
-RUN composer install \
-    --no-dev \
-    --no-scripts \
-    --no-interaction \
-    --prefer-dist \
-    --optimize-autoloader \
-    --ignore-platform-reqs
-
-# Copy application code
+# Copy ALL application code first
 COPY . .
 
-# Set correct permissions before running scripts
+# Create temporary .env for build (required for artisan commands)
+RUN echo "APP_NAME=Laravel\nAPP_ENV=production\nAPP_KEY=base64:$(openssl rand -base64 32)\nAPP_DEBUG=false\nDB_CONNECTION=pgsql\nCACHE_STORE=file\nSESSION_DRIVER=file\nQUEUE_CONNECTION=sync" > .env
+
+# Install PHP dependencies
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --prefer-dist \
+    --optimize-autoloader
+
+# Set correct permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache
 
-# Create .env file for artisan commands
-RUN cp env.example .env || touch .env
-
-# Run composer scripts (dump-autoload, package discovery)
-RUN composer dump-autoload --optimize --no-interaction
+# Remove temporary .env (will be set by Render at runtime)
+RUN rm -f .env
 
 # Copy nginx configuration
 COPY docker/nginx.conf /etc/nginx/sites-available/default
-RUN ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default \
-    && rm -f /etc/nginx/sites-enabled/default.bak
+RUN rm -f /etc/nginx/sites-enabled/default \
+    && ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
 # Copy supervisor configuration
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
