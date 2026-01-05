@@ -28,7 +28,7 @@ return new class extends Migration
                 [
                     'section_id' => $section2Id,
                     'locale' => 'uz',
-                    'name' => "II Bo'lim. Mehnat shartnomasi",
+                    'title' => "II Bo'lim. Mehnat shartnomasi",
                     'description' => "Mehnat shartnomasini tuzish, o'zgartirish va bekor qilish tartibi",
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -36,7 +36,7 @@ return new class extends Migration
                 [
                     'section_id' => $section2Id,
                     'locale' => 'ru',
-                    'name' => 'Раздел II. Трудовой договор',
+                    'title' => 'Раздел II. Трудовой договор',
                     'description' => 'Порядок заключения, изменения и расторжения трудового договора',
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -44,7 +44,7 @@ return new class extends Migration
                 [
                     'section_id' => $section2Id,
                     'locale' => 'en',
-                    'name' => 'Section II. Employment Contract',
+                    'title' => 'Section II. Employment Contract',
                     'description' => 'Procedure for concluding, amending and terminating employment contracts',
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -67,7 +67,7 @@ return new class extends Migration
                 [
                     'chapter_id' => $chapter3Id,
                     'locale' => 'uz',
-                    'name' => "3-bob. Mehnat shartnomasini tuzish",
+                    'title' => "3-bob. Mehnat shartnomasini tuzish",
                     'description' => "Mehnat shartnomasini tuzish tartibi va shartlari",
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -75,7 +75,7 @@ return new class extends Migration
                 [
                     'chapter_id' => $chapter3Id,
                     'locale' => 'ru',
-                    'name' => 'Глава 3. Заключение трудового договора',
+                    'title' => 'Глава 3. Заключение трудового договора',
                     'description' => 'Порядок и условия заключения трудового договора',
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -83,7 +83,7 @@ return new class extends Migration
                 [
                     'chapter_id' => $chapter3Id,
                     'locale' => 'en',
-                    'name' => 'Chapter 3. Conclusion of Employment Contract',
+                    'title' => 'Chapter 3. Conclusion of Employment Contract',
                     'description' => 'Procedure and conditions for concluding employment contracts',
                     'created_at' => now(),
                     'updated_at' => now(),
