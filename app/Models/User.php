@@ -140,6 +140,70 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Check if user is muallif (author).
+     */
+    public function isMuallif(): bool
+    {
+        return $this->hasRole(Role::MUALLIF);
+    }
+
+    /**
+     * Check if user is tarjimon (translator).
+     */
+    public function isTarjimon(): bool
+    {
+        return $this->hasRole(Role::TARJIMON);
+    }
+
+    /**
+     * Check if user is ishchi guruh (working group).
+     */
+    public function isIshchiGuruh(): bool
+    {
+        return $this->hasRole(Role::ISHCHI_GURUH);
+    }
+
+    /**
+     * Check if user is ekspert (expert).
+     */
+    public function isEkspert(): bool
+    {
+        return $this->hasRole(Role::EKSPERT);
+    }
+
+    /**
+     * Check if user can manage content.
+     */
+    public function canManageContent(): bool
+    {
+        return $this->isAdmin() || $this->isModerator() || $this->isIshchiGuruh();
+    }
+
+    /**
+     * Check if user can create content.
+     */
+    public function canCreateContent(): bool
+    {
+        return $this->canManageContent() || $this->isMuallif();
+    }
+
+    /**
+     * Check if user can translate content.
+     */
+    public function canTranslate(): bool
+    {
+        return $this->isAdmin() || $this->isTarjimon();
+    }
+
+    /**
+     * Check if user can add expert comments.
+     */
+    public function canAddExpertComments(): bool
+    {
+        return $this->isAdmin() || $this->isEkspert();
+    }
+
+    /**
      * Check if 2FA is enabled.
      */
     public function hasTwoFactorEnabled(): bool

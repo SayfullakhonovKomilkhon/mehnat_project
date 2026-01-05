@@ -64,6 +64,7 @@ class Kernel extends HttpKernel
         
         // Custom middleware
         'role' => \App\Http\Middleware\RoleMiddleware::class,
+        'permission' => \App\Http\Middleware\CheckPermissionMiddleware::class,
         'locale' => \App\Http\Middleware\LocaleMiddleware::class,
         'check.banned' => \App\Http\Middleware\CheckBannedMiddleware::class,
         'log.activity' => \App\Http\Middleware\LogActivityMiddleware::class,

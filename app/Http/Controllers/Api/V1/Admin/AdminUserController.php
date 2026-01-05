@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRoleRequest;
 use App\Http\Requests\Admin\UpdateUserStatusRequest;
 use App\Http\Resources\UserResource;
@@ -11,6 +12,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class AdminUserController extends Controller
 {
@@ -58,6 +60,36 @@ class AdminUserController extends Controller
                 'total' => $users->total(),
             ],
         ]);
+    }
+
+    /**
+     * Create a new user.
+     *
+     * @param StoreUserRequest $request
+     * @return JsonResponse
+     */
+    public function store(StoreUserRequest $request): JsonResponse
+    {
+        $this->authorize('create', User::class);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role_id' => $request->role_id,
+            'email_verified_at' => now(), // Auto-verify for admin-created users
+            'is_active' => true,
+            'preferred_locale' => $request->preferred_locale ?? 'uz',
+        ]);
+
+        // Log user creation
+        ActivityLog::logCreate($user, 'User created by admin');
+
+        return $this->success(
+            new UserResource($user->load('role')),
+            __('messages.user_created'),
+            201
+        );
     }
 
     /**

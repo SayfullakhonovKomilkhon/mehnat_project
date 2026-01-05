@@ -71,3 +71,4 @@ databases:
     user: mehnat_user
     ipAllowList: []  # Разрешить все IP
 
+

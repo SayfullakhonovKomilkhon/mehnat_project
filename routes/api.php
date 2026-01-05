@@ -198,6 +198,7 @@ Route::prefix('v1')->group(function () {
             // User Management
             Route::prefix('users')->group(function () {
                 Route::get('/', [AdminUserController::class, 'index']);
+                Route::post('/', [AdminUserController::class, 'store']); // Create new user
                 Route::get('/roles', [AdminUserController::class, 'roles']);
                 Route::get('/{id}', [AdminUserController::class, 'show'])->where('id', '[0-9]+');
                 Route::put('/{id}/role', [AdminUserController::class, 'updateRole'])->where('id', '[0-9]+');

@@ -37,43 +37,127 @@ class SampleDataSeeder extends Seeder
      */
     private function createSampleUsers(): void
     {
-        $moderatorRole = Role::where('slug', Role::MODERATOR)->first();
-        $userRole = Role::where('slug', Role::USER)->first();
+        // Get all roles
+        $roles = [
+            'admin' => Role::where('slug', Role::ADMIN)->first(),
+            'muallif' => Role::where('slug', Role::MUALLIF)->first(),
+            'tarjimon' => Role::where('slug', Role::TARJIMON)->first(),
+            'ishchi_guruh' => Role::where('slug', Role::ISHCHI_GURUH)->first(),
+            'ekspert' => Role::where('slug', Role::EKSPERT)->first(),
+            'moderator' => Role::where('slug', Role::MODERATOR)->first(),
+            'user' => Role::where('slug', Role::USER)->first(),
+        ];
 
-        if (!$moderatorRole || !$userRole) {
-            $this->command->warn('  Roles not found, skipping user creation');
+        // Check if essential roles exist
+        if (!$roles['admin'] || !$roles['user']) {
+            $this->command->warn('  Essential roles not found, skipping user creation');
             return;
         }
 
-        // Create moderator (use firstOrCreate to avoid duplicates)
-        User::firstOrCreate(
-            ['email' => 'moderator@mehnat-kodeksi.uz'],
+        // Sample users for each role
+        $sampleUsers = [
+            // Admin
             [
+                'email' => 'admin@admin.com',
+                'name' => 'Admin User',
+                'password' => 'Admin123!',
+                'role' => 'admin',
+                'locale' => 'uz',
+            ],
+            // Muallif (Author)
+            [
+                'email' => 'muallif@gmail.com',
+                'name' => 'Muallif Karimov',
+                'password' => 'Muallif123!',
+                'role' => 'muallif',
+                'locale' => 'uz',
+            ],
+            // Tarjimon (Translator)
+            [
+                'email' => 'translater@crudbooster.com',
+                'name' => 'Tarjimon Rahimov',
+                'password' => 'Tarjimon123!',
+                'role' => 'tarjimon',
+                'locale' => 'ru',
+            ],
+            // Ishchi Guruh (Working Group)
+            [
+                'email' => 'workers@gmail.com',
+                'name' => 'Ishchi Guruh User',
+                'password' => 'Workers123!',
+                'role' => 'ishchi_guruh',
+                'locale' => 'uz',
+            ],
+            // Ekspert (Expert)
+            [
+                'email' => 'expert@gmail.com',
+                'name' => 'Ekspert Alimov',
+                'password' => 'Expert123!',
+                'role' => 'ekspert',
+                'locale' => 'uz',
+            ],
+            // Moderator
+            [
+                'email' => 'moderator@mehnat-kodeksi.uz',
                 'name' => 'Moderator User',
-                'password' => Hash::make('ModeratorPass123!'),
-                'role_id' => $moderatorRole->id,
-                'email_verified_at' => now(),
-                'is_active' => true,
-                'preferred_locale' => 'ru',
-            ]
-        );
+                'password' => 'ModeratorPass123!',
+                'role' => 'moderator',
+                'locale' => 'ru',
+            ],
+            // Regular users
+            [
+                'email' => 'user1@example.com',
+                'name' => 'Foydalanuvchi Bir',
+                'password' => 'UserPass123!',
+                'role' => 'user',
+                'locale' => 'uz',
+            ],
+            [
+                'email' => 'user2@example.com',
+                'name' => 'Пользователь Два',
+                'password' => 'UserPass123!',
+                'role' => 'user',
+                'locale' => 'ru',
+            ],
+            [
+                'email' => 'user3@example.com',
+                'name' => 'User Three',
+                'password' => 'UserPass123!',
+                'role' => 'user',
+                'locale' => 'en',
+            ],
+        ];
 
-        // Create regular users
-        for ($i = 1; $i <= 5; $i++) {
+        $createdCount = 0;
+        foreach ($sampleUsers as $userData) {
+            $role = $roles[$userData['role']] ?? $roles['user'];
+            
+            if (!$role) {
+                $this->command->warn("  Role {$userData['role']} not found, skipping user {$userData['email']}");
+                continue;
+            }
+
             User::firstOrCreate(
-                ['email' => "user{$i}@example.com"],
+                ['email' => $userData['email']],
                 [
-                    'name' => "Test User {$i}",
-                    'password' => Hash::make('UserPass123!'),
-                    'role_id' => $userRole->id,
+                    'name' => $userData['name'],
+                    'password' => Hash::make($userData['password']),
+                    'role_id' => $role->id,
                     'email_verified_at' => now(),
                     'is_active' => true,
-                    'preferred_locale' => ['uz', 'ru', 'en'][array_rand(['uz', 'ru', 'en'])],
+                    'preferred_locale' => $userData['locale'],
                 ]
             );
+            $createdCount++;
         }
 
-        $this->command->info('  Created/verified 6 sample users');
+        $this->command->info("  Created/verified {$createdCount} sample users");
+        
+        // Display user credentials table
+        $this->command->table(
+            ['Email', 'Role', 'Password'],
+            array_map(fn($u) => [$u['email'], $u['role'], $u['password']], $sampleUsers)
+        );
     }
 
     /**

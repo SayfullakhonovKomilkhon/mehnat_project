@@ -38,3 +38,4 @@ docker/entrypoint.sh text eol=lf
 *.tar binary
 *.pdf binary
 
+
