@@ -194,6 +194,7 @@ class AdminChapterController extends Controller
         foreach ($locales as $locale) {
             Cache::forget("sections.{$sectionId}.{$locale}");
             Cache::forget("sections.all.{$locale}");
+            Cache::forget("sections.all.with_articles.{$locale}");
         }
     }
 }

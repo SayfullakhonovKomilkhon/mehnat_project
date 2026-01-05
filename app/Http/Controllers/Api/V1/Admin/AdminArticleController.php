@@ -260,6 +260,9 @@ class AdminArticleController extends Controller
         
         foreach ($locales as $locale) {
             Cache::forget("chapters.{$chapterId}.{$locale}");
+            // Also clear sections cache since it now includes articles
+            Cache::forget("sections.all.{$locale}");
+            Cache::forget("sections.all.with_articles.{$locale}");
         }
     }
 }

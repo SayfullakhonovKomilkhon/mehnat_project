@@ -187,6 +187,7 @@ class AdminSectionController extends Controller
         
         foreach ($locales as $locale) {
             Cache::forget("sections.all.{$locale}");
+            Cache::forget("sections.all.with_articles.{$locale}");
         }
 
         // Also clear individual section caches (pattern matching not available in all cache drivers)
