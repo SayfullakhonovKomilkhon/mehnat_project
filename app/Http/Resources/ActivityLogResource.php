@@ -26,7 +26,12 @@ class ActivityLogResource extends JsonResource
             'new_values' => $this->new_values,
             'user' => $this->when(
                 $this->relationLoaded('user'),
-                fn () => $this->user ? ['id' => $this->user->id, 'name' => $this->user->name] : null
+                fn () => $this->user ? [
+                    'id' => $this->user->id,
+                    'name' => $this->user->name,
+                    'role' => $this->user->role?->name,
+                    'role_display' => $this->user->role?->display_name,
+                ] : null
             ),
             'created_at' => $this->created_at?->toIso8601String(),
         ];

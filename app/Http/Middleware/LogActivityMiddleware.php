@@ -46,6 +46,15 @@ class LogActivityMiddleware
     private function logActivity(Request $request, Response $response): void
     {
         try {
+            // Skip if controller already logged this action (check for translation status changes)
+            $path = $request->path();
+            $data = $request->all();
+            
+            // Skip middleware logging for translation status updates - these are logged manually in controller
+            if (isset($data['translation_status']) || str_contains($path, '/status')) {
+                return;
+            }
+            
             $action = $this->determineAction($request);
             $modelInfo = $this->extractModelInfo($request);
 

@@ -33,6 +33,17 @@ class CommentResource extends JsonResource
                 'id' => $this->user->id,
                 'name' => $this->user->name,
             ],
+            'article' => $this->when(
+                $this->relationLoaded('article'),
+                fn () => $this->article ? [
+                    'id' => $this->article->id,
+                    'article_number' => $this->article->article_number,
+                    'title' => $this->article->translation()?->title,
+                    'translations' => $this->article->translations?->mapWithKeys(fn ($t) => [
+                        $t->locale => ['title' => $t->title]
+                    ]),
+                ] : null
+            ),
             'parent_id' => $this->parent_id,
             'replies' => CommentResource::collection($this->whenLoaded('replies')),
             'moderated_at' => $this->when($currentUser?->isAdminOrModerator(), $this->moderated_at?->toIso8601String()),
