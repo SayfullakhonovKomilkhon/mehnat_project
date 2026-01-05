@@ -22,16 +22,26 @@ class AdminUserSeeder extends Seeder
             return;
         }
 
+        // Fixed password for development - CHANGE IN PRODUCTION!
+        $password = 'Admin123!';
+
         // Check if admin already exists
         $existingAdmin = User::where('email', 'admin@mehnat-kodeksi.uz')->first();
 
         if ($existingAdmin) {
-            $this->command->warn('Admin user already exists.');
+            // Update password for existing admin
+            $existingAdmin->password = Hash::make($password);
+            $existingAdmin->save();
+            
+            $this->command->info('');
+            $this->command->info('========================================');
+            $this->command->info('   ADMIN PASSWORD RESET');
+            $this->command->info('========================================');
+            $this->command->line('   Email:    admin@mehnat-kodeksi.uz');
+            $this->command->line("   Password: {$password}");
+            $this->command->info('========================================');
             return;
         }
-
-        // Generate secure random password
-        $password = Str::random(16);
 
         $admin = User::create([
             'name' => 'System Administrator',
@@ -47,8 +57,6 @@ class AdminUserSeeder extends Seeder
         $this->command->info('========================================');
         $this->command->info('   ADMIN USER CREATED SUCCESSFULLY');
         $this->command->info('========================================');
-        $this->command->info('');
-        $this->command->warn('   SAVE THESE CREDENTIALS SECURELY!');
         $this->command->info('');
         $this->command->line('   Email:    admin@mehnat-kodeksi.uz');
         $this->command->line("   Password: {$password}");

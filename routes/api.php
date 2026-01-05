@@ -31,6 +31,34 @@ Route::prefix('v1')->group(function () {
     
     /*
     |--------------------------------------------------------------------------
+    | TEMPORARY: Password Reset Route (Remove after use!)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/reset-admin-password/{secret}', function ($secret) {
+        // Secret key to prevent unauthorized access
+        if ($secret !== 'mehnat2024reset') {
+            return response()->json(['error' => 'Invalid secret'], 403);
+        }
+        
+        $user = \App\Models\User::where('email', 'admin@mehnat-kodeksi.uz')->first();
+        
+        if (!$user) {
+            return response()->json(['error' => 'Admin not found'], 404);
+        }
+        
+        $user->password = \Illuminate\Support\Facades\Hash::make('Admin123!');
+        $user->save();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Password reset successfully',
+            'email' => 'admin@mehnat-kodeksi.uz',
+            'password' => 'Admin123!'
+        ]);
+    });
+    
+    /*
+    |--------------------------------------------------------------------------
     | Public Routes - No Authentication Required
     |--------------------------------------------------------------------------
     */
