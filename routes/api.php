@@ -31,6 +31,41 @@ Route::prefix('v1')->group(function () {
     
     /*
     |--------------------------------------------------------------------------
+    | Temporary Seeder Route (REMOVE AFTER USE!)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/run-seeders/{token}', function ($token) {
+        // Security token to prevent unauthorized access
+        if ($token !== 'mehnat2024seed') {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        
+        try {
+            \Illuminate\Support\Facades\Artisan::call('db:seed', [
+                '--class' => 'Database\\Seeders\\RoleSeeder',
+                '--force' => true,
+            ]);
+            
+            \Illuminate\Support\Facades\Artisan::call('db:seed', [
+                '--class' => 'Database\\Seeders\\SampleDataSeeder',
+                '--force' => true,
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Seeders executed successfully!',
+                'output' => \Illuminate\Support\Facades\Artisan::output(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    });
+    
+    /*
+    |--------------------------------------------------------------------------
     | Public Routes - No Authentication Required
     |--------------------------------------------------------------------------
     */
