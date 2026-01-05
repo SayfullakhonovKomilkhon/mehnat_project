@@ -31,41 +31,6 @@ Route::prefix('v1')->group(function () {
     
     /*
     |--------------------------------------------------------------------------
-    | Temporary Seeder Route (REMOVE AFTER USE!)
-    |--------------------------------------------------------------------------
-    */
-    Route::get('/run-seeders/{token}', function ($token) {
-        // Security token to prevent unauthorized access
-        if ($token !== 'mehnat2024seed') {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-        
-        try {
-            \Illuminate\Support\Facades\Artisan::call('db:seed', [
-                '--class' => 'Database\\Seeders\\RoleSeeder',
-                '--force' => true,
-            ]);
-            
-            \Illuminate\Support\Facades\Artisan::call('db:seed', [
-                '--class' => 'Database\\Seeders\\SampleDataSeeder',
-                '--force' => true,
-            ]);
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Seeders executed successfully!',
-                'output' => \Illuminate\Support\Facades\Artisan::output(),
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    });
-    
-    /*
-    |--------------------------------------------------------------------------
     | Public Routes - No Authentication Required
     |--------------------------------------------------------------------------
     */
@@ -166,33 +131,33 @@ Route::prefix('v1')->group(function () {
         |--------------------------------------------------------------------------
         */
         
-        Route::prefix('admin')->middleware(['role:admin,moderator', 'log.activity'])->group(function () {
+        Route::prefix('admin')->middleware(['role:admin,moderator,muallif,tarjimon,ishchi_guruh,ekspert', 'log.activity'])->group(function () {
             
             // Sections Management
             Route::prefix('sections')->group(function () {
                 Route::get('/', [AdminSectionController::class, 'index']);
                 Route::get('/{id}', [AdminSectionController::class, 'show'])->where('id', '[0-9]+');
-                Route::post('/', [AdminSectionController::class, 'store']);
-                Route::put('/{id}', [AdminSectionController::class, 'update'])->where('id', '[0-9]+');
-                Route::delete('/{id}', [AdminSectionController::class, 'destroy'])->where('id', '[0-9]+');
+                Route::post('/', [AdminSectionController::class, 'store'])->middleware('role:admin,ishchi_guruh');
+                Route::put('/{id}', [AdminSectionController::class, 'update'])->where('id', '[0-9]+')->middleware('role:admin,moderator,ishchi_guruh');
+                Route::delete('/{id}', [AdminSectionController::class, 'destroy'])->where('id', '[0-9]+')->middleware('role:admin,ishchi_guruh');
             });
             
             // Chapters Management
             Route::prefix('chapters')->group(function () {
                 Route::get('/', [AdminChapterController::class, 'index']);
                 Route::get('/{id}', [AdminChapterController::class, 'show'])->where('id', '[0-9]+');
-                Route::post('/', [AdminChapterController::class, 'store']);
-                Route::put('/{id}', [AdminChapterController::class, 'update'])->where('id', '[0-9]+');
-                Route::delete('/{id}', [AdminChapterController::class, 'destroy'])->where('id', '[0-9]+');
+                Route::post('/', [AdminChapterController::class, 'store'])->middleware('role:admin,ishchi_guruh');
+                Route::put('/{id}', [AdminChapterController::class, 'update'])->where('id', '[0-9]+')->middleware('role:admin,moderator,ishchi_guruh');
+                Route::delete('/{id}', [AdminChapterController::class, 'destroy'])->where('id', '[0-9]+')->middleware('role:admin,ishchi_guruh');
             });
             
-            // Articles Management
+            // Articles Management - tarjimon can view and update (for translations)
             Route::prefix('articles')->group(function () {
                 Route::get('/', [AdminArticleController::class, 'index']);
                 Route::get('/{id}', [AdminArticleController::class, 'show'])->where('id', '[0-9]+');
-                Route::post('/', [AdminArticleController::class, 'store']);
+                Route::post('/', [AdminArticleController::class, 'store'])->middleware('role:admin,moderator,muallif,ishchi_guruh');
                 Route::put('/{id}', [AdminArticleController::class, 'update'])->where('id', '[0-9]+');
-                Route::delete('/{id}', [AdminArticleController::class, 'destroy'])->where('id', '[0-9]+');
+                Route::delete('/{id}', [AdminArticleController::class, 'destroy'])->where('id', '[0-9]+')->middleware('role:admin');
             });
             
             // Comments Moderation
