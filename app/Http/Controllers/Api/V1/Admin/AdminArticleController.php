@@ -279,6 +279,8 @@ class AdminArticleController extends Controller
             return $this->error(__('messages.not_found'), 'NOT_FOUND', 404);
         }
 
+        $oldValues = $article->toArray();
+
         $article->update([
             'is_active' => true,
             'translation_status' => Article::TRANSLATION_APPROVED,
@@ -286,7 +288,7 @@ class AdminArticleController extends Controller
 
         $this->clearCache($article->chapter_id);
         
-        ActivityLog::logUpdate($article, 'Article approved and published');
+        ActivityLog::logUpdate($article, $oldValues, 'Article approved and published');
 
         return $this->success(
             new ArticleResource($article->fresh()->load('translations')),
@@ -308,6 +310,8 @@ class AdminArticleController extends Controller
             return $this->error(__('messages.not_found'), 'NOT_FOUND', 404);
         }
 
+        $oldValues = $article->toArray();
+
         $article->update([
             'is_active' => false,
             'translation_status' => Article::TRANSLATION_DRAFT,
@@ -315,7 +319,7 @@ class AdminArticleController extends Controller
 
         $this->clearCache($article->chapter_id);
         
-        ActivityLog::logUpdate($article, 'Article rejected');
+        ActivityLog::logUpdate($article, $oldValues, 'Article rejected');
 
         return $this->success(
             new ArticleResource($article->fresh()->load('translations')),
