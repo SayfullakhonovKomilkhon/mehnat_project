@@ -36,7 +36,7 @@ class ArticlePolicy
      */
     public function create(User $user): bool
     {
-        return $user->isAdminOrModerator();
+        return $user->isAdminOrModerator() || $user->isMuallif() || $user->isIshchiGuruh();
     }
 
     /**
@@ -44,7 +44,11 @@ class ArticlePolicy
      */
     public function update(User $user, Article $article): bool
     {
-        return $user->isAdminOrModerator();
+        // Admin, moderator, translator (for translations), author, working group can update
+        return $user->isAdminOrModerator() 
+            || $user->isTarjimon()  // Translators can update translations
+            || $user->isMuallif()   // Authors can update content
+            || $user->isIshchiGuruh(); // Working group can update structure
     }
 
     /**
