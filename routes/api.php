@@ -49,11 +49,66 @@ Route::prefix('v1')->group(function () {
         $user->password = \Illuminate\Support\Facades\Hash::make('Admin123!');
         $user->save();
         
+        // Create sample content if not exists
+        $sectionCount = \App\Models\Section::count();
+        $chapterCount = \App\Models\Chapter::count();
+        $articleCount = \App\Models\Article::count();
+        
+        if ($sectionCount == 0) {
+            // Create test section
+            $section = \App\Models\Section::create([
+                'order_number' => 1,
+                'is_active' => true,
+            ]);
+            $section->translations()->create([
+                'locale' => 'uz',
+                'title' => 'I Bo\'lim. Umumiy qoidalar',
+                'description' => 'Mehnat kodeksining umumiy qoidalari',
+            ]);
+            
+            // Create test chapter
+            $chapter = \App\Models\Chapter::create([
+                'section_id' => $section->id,
+                'order_number' => 1,
+                'is_active' => true,
+            ]);
+            $chapter->translations()->create([
+                'locale' => 'uz',
+                'title' => '1-bob. Asosiy qoidalar',
+                'description' => 'Mehnat munosabatlarining asosiy qoidalari',
+            ]);
+            
+            // Create test article
+            $article = \App\Models\Article::create([
+                'chapter_id' => $chapter->id,
+                'article_number' => '1',
+                'order_number' => 1,
+                'is_active' => true,
+                'views_count' => 100,
+            ]);
+            $article->translations()->create([
+                'locale' => 'uz',
+                'title' => '1-modda. Mehnat kodeksining vazifasi',
+                'content' => 'O\'zbekiston Respublikasi Mehnat kodeksining vazifasi mehnat munosabatlarini tartibga solish, fuqarolarning mehnat huquqlarini ta\'minlash va himoya qilishdan iborat.',
+                'summary' => 'Mehnat kodeksining asosiy vazifasi',
+                'keywords' => ['mehnat', 'kodeks'],
+            ]);
+            
+            $sectionCount = 1;
+            $chapterCount = 1;
+            $articleCount = 1;
+        }
+        
         return response()->json([
             'success' => true,
             'message' => 'Password reset successfully',
             'email' => 'admin@mehnat-kodeksi.uz',
-            'password' => 'Admin123!'
+            'password' => 'Admin123!',
+            'data' => [
+                'sections' => $sectionCount,
+                'chapters' => $chapterCount,
+                'articles' => $articleCount,
+            ]
         ]);
     });
     
