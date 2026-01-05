@@ -27,6 +27,17 @@ class ActivityLog extends Model
     public const ACTION_PASSWORD_RESET = 'password_reset';
     public const ACTION_ACTIVATE_USER = 'activate_user';
     public const ACTION_DEACTIVATE_USER = 'deactivate_user';
+    
+    // Translation workflow actions
+    public const ACTION_TRANSLATION_SUBMITTED = 'translation_submitted';
+    public const ACTION_TRANSLATION_APPROVED = 'translation_approved';
+    public const ACTION_TRANSLATION_REJECTED = 'translation_rejected';
+    
+    // Article workflow actions
+    public const ACTION_ARTICLE_CREATED = 'article_created';
+    public const ACTION_ARTICLE_UPDATED = 'article_updated';
+    public const ACTION_SECTION_CREATED = 'section_created';
+    public const ACTION_CHAPTER_CREATED = 'chapter_created';
 
     /**
      * The attributes that are mass assignable.

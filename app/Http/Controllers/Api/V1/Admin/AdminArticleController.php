@@ -170,8 +170,48 @@ class AdminArticleController extends Controller
             // Clear cache
             $this->clearCache($article->chapter_id);
 
-            // Log update
-            ActivityLog::logUpdate($article, $oldValues, 'Article updated');
+            // Log translation status changes with specific actions
+            $oldTranslationStatus = $oldValues['translation_status'] ?? 'draft';
+            $newTranslationStatus = $article->translation_status ?? 'draft';
+            
+            if ($oldTranslationStatus !== $newTranslationStatus) {
+                $articleTitle = $article->translation()?->title ?? "Article #{$article->article_number}";
+                
+                if ($newTranslationStatus === 'pending') {
+                    ActivityLog::log(
+                        ActivityLog::ACTION_TRANSLATION_SUBMITTED,
+                        auth()->id(),
+                        Article::class,
+                        $article->id,
+                        ['translation_status' => $oldTranslationStatus],
+                        ['translation_status' => $newTranslationStatus],
+                        "Translation submitted for review: {$articleTitle}"
+                    );
+                } elseif ($newTranslationStatus === 'approved') {
+                    ActivityLog::log(
+                        ActivityLog::ACTION_TRANSLATION_APPROVED,
+                        auth()->id(),
+                        Article::class,
+                        $article->id,
+                        ['translation_status' => $oldTranslationStatus],
+                        ['translation_status' => $newTranslationStatus],
+                        "Translation approved: {$articleTitle}"
+                    );
+                } elseif ($newTranslationStatus === 'draft' && $oldTranslationStatus === 'pending') {
+                    ActivityLog::log(
+                        ActivityLog::ACTION_TRANSLATION_REJECTED,
+                        auth()->id(),
+                        Article::class,
+                        $article->id,
+                        ['translation_status' => $oldTranslationStatus],
+                        ['translation_status' => $newTranslationStatus],
+                        "Translation rejected: {$articleTitle}"
+                    );
+                }
+            } else {
+                // Regular update log
+                ActivityLog::logUpdate($article, $oldValues, 'Article updated');
+            }
 
             return $this->success(
                 new ArticleResource($article->fresh()->load('translations')),
