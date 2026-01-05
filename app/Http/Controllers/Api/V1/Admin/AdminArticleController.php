@@ -80,11 +80,20 @@ class AdminArticleController extends Controller
         try {
             DB::beginTransaction();
 
+            $user = $request->user();
+            
+            // Non-admin users: articles are inactive (pending moderation)
+            // Admin/Moderator: can set is_active directly
+            $isAdmin = $user->isAdminOrModerator();
+            $isActive = $isAdmin ? $request->get('is_active', true) : false;
+            $translationStatus = $isAdmin ? Article::TRANSLATION_APPROVED : Article::TRANSLATION_PENDING;
+
             $article = Article::create([
                 'chapter_id' => $request->chapter_id,
                 'article_number' => $request->article_number,
                 'order_number' => $request->order_number,
-                'is_active' => $request->get('is_active', true),
+                'is_active' => $isActive,
+                'translation_status' => $translationStatus,
             ]);
 
             // Create translations
@@ -103,12 +112,17 @@ class AdminArticleController extends Controller
             // Clear cache
             $this->clearCache($article->chapter_id);
 
-            // Log creation
-            ActivityLog::logCreate($article, 'Article created');
+            // Log creation with moderation status
+            $logMessage = $isAdmin ? 'Article created and published' : 'Article created (pending moderation)';
+            ActivityLog::logCreate($article, $logMessage);
+
+            $responseMessage = $isAdmin 
+                ? __('messages.article_created') 
+                : __('messages.article_pending_moderation', [], 'Article submitted for moderation');
 
             return $this->created(
                 new ArticleResource($article->load('translations')),
-                __('messages.article_created')
+                $responseMessage
             );
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -222,6 +236,91 @@ class AdminArticleController extends Controller
             report($e);
             return $this->error(__('messages.update_failed'), 'UPDATE_FAILED', 500);
         }
+    }
+
+    /**
+     * Get pending articles for moderation.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function pending(Request $request): JsonResponse
+    {
+        $perPage = min($request->get('per_page', 20), 100);
+
+        $articles = Article::where('is_active', false)
+            ->where('translation_status', Article::TRANSLATION_PENDING)
+            ->ordered()
+            ->with(['translations', 'chapter.translations'])
+            ->paginate($perPage);
+
+        return $this->success([
+            'items' => ArticleResource::collection($articles),
+            'pagination' => [
+                'current_page' => $articles->currentPage(),
+                'last_page' => $articles->lastPage(),
+                'per_page' => $articles->perPage(),
+                'total' => $articles->total(),
+            ],
+        ]);
+    }
+
+    /**
+     * Approve an article (publish it).
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function approve(int $id): JsonResponse
+    {
+        $article = Article::find($id);
+
+        if (!$article) {
+            return $this->error(__('messages.not_found'), 'NOT_FOUND', 404);
+        }
+
+        $article->update([
+            'is_active' => true,
+            'translation_status' => Article::TRANSLATION_APPROVED,
+        ]);
+
+        $this->clearCache($article->chapter_id);
+        
+        ActivityLog::logUpdate($article, 'Article approved and published');
+
+        return $this->success(
+            new ArticleResource($article->fresh()->load('translations')),
+            __('messages.article_approved', [], 'Article approved')
+        );
+    }
+
+    /**
+     * Reject an article.
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function reject(int $id): JsonResponse
+    {
+        $article = Article::find($id);
+
+        if (!$article) {
+            return $this->error(__('messages.not_found'), 'NOT_FOUND', 404);
+        }
+
+        $article->update([
+            'is_active' => false,
+            'translation_status' => Article::TRANSLATION_DRAFT,
+        ]);
+
+        $this->clearCache($article->chapter_id);
+        
+        ActivityLog::logUpdate($article, 'Article rejected');
+
+        return $this->success(
+            new ArticleResource($article->fresh()->load('translations')),
+            __('messages.article_rejected', [], 'Article rejected')
+        );
     }
 
     /**

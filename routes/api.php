@@ -154,8 +154,11 @@ Route::prefix('v1')->group(function () {
             // Articles Management - tarjimon can view and update (for translations)
             Route::prefix('articles')->group(function () {
                 Route::get('/', [AdminArticleController::class, 'index']);
+                Route::get('/pending', [AdminArticleController::class, 'pending'])->middleware('role:admin,moderator');
                 Route::get('/{id}', [AdminArticleController::class, 'show'])->where('id', '[0-9]+');
                 Route::post('/', [AdminArticleController::class, 'store'])->middleware('role:admin,moderator,muallif,ishchi_guruh');
+                Route::post('/{id}/approve', [AdminArticleController::class, 'approve'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
+                Route::post('/{id}/reject', [AdminArticleController::class, 'reject'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
                 Route::put('/{id}', [AdminArticleController::class, 'update'])->where('id', '[0-9]+');
                 Route::delete('/{id}', [AdminArticleController::class, 'destroy'])->where('id', '[0-9]+')->middleware('role:admin');
             });

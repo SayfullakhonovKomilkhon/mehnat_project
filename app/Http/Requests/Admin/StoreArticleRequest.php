@@ -11,7 +11,10 @@ class StoreArticleRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->isAdminOrModerator();
+        // Allow admin, moderator, author, and working group to create articles
+        return $this->user()->isAdminOrModerator() 
+            || $this->user()->isMuallif() 
+            || $this->user()->isIshchiGuruh();
     }
 
     /**
