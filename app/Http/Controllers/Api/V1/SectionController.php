@@ -23,12 +23,18 @@ class SectionController extends Controller
     {
         try {
             $locale = app()->getLocale();
-            $cacheKey = "sections.all.{$locale}";
+            $cacheKey = "sections.all.with_articles.{$locale}";
 
             $sections = Cache::remember($cacheKey, now()->addHour(), function () {
                 return Section::active()
                     ->ordered()
-                    ->with(['translations', 'chapters' => fn ($q) => $q->active()->ordered()])
+                    ->with([
+                        'translations', 
+                        'chapters' => fn ($q) => $q->active()->ordered()->with([
+                            'translations',
+                            'articles' => fn ($aq) => $aq->active()->ordered()->with('translations')
+                        ])
+                    ])
                     ->get();
             });
         } catch (\Exception $e) {
@@ -36,7 +42,13 @@ class SectionController extends Controller
             Log::warning('Cache unavailable: ' . $e->getMessage());
             $sections = Section::active()
                 ->ordered()
-                ->with(['translations', 'chapters' => fn ($q) => $q->active()->ordered()])
+                ->with([
+                    'translations', 
+                    'chapters' => fn ($q) => $q->active()->ordered()->with([
+                        'translations',
+                        'articles' => fn ($aq) => $aq->active()->ordered()->with('translations')
+                    ])
+                ])
                 ->get();
         }
 
