@@ -31,18 +31,33 @@ class ArticleResource extends JsonResource
         $locale = app()->getLocale();
         $translation = $this->translation($locale);
 
+        // Build translations object with all available locales
+        $translations = [];
+        if ($this->relationLoaded('translations')) {
+            foreach ($this->translations as $trans) {
+                $translations[$trans->locale] = [
+                    'title' => $trans->title,
+                    'content' => $trans->content,
+                    'summary' => $trans->summary,
+                    'keywords' => $trans->keywords,
+                ];
+            }
+        }
+
         return [
             'id' => $this->id,
             'article_number' => $this->article_number,
             'chapter_id' => $this->chapter_id,
             'order_number' => $this->order_number,
             'is_active' => $this->is_active,
+            'translation_status' => $this->translation_status ?? 'draft',
             'views_count' => $this->views_count,
             'title' => $translation?->title,
             'content' => $this->when($this->includeContent, $translation?->content),
             'summary' => $translation?->summary,
             'keywords' => $translation?->keywords,
             'locale' => $locale,
+            'translations' => $this->when(!empty($translations), $translations),
             'chapter' => new ChapterResource($this->whenLoaded('chapter')),
             'comments_count' => $this->when(
                 $this->relationLoaded('comments') || $this->comments_count !== null,

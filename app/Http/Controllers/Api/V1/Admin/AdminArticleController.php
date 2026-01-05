@@ -139,7 +139,7 @@ class AdminArticleController extends Controller
 
             $oldValues = $article->toArray();
 
-            $article->update($request->only(['chapter_id', 'article_number', 'order_number', 'is_active']));
+            $article->update($request->only(['chapter_id', 'article_number', 'order_number', 'is_active', 'translation_status']));
 
             if ($request->has('translations')) {
                 foreach ($request->translations as $locale => $data) {

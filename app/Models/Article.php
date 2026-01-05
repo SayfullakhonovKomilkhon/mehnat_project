@@ -18,11 +18,19 @@ class Article extends Model
      *
      * @var array<int, string>
      */
+    /**
+     * Translation status constants
+     */
+    public const TRANSLATION_DRAFT = 'draft';
+    public const TRANSLATION_PENDING = 'pending';
+    public const TRANSLATION_APPROVED = 'approved';
+
     protected $fillable = [
         'chapter_id',
         'article_number',
         'order_number',
         'is_active',
+        'translation_status',
         'views_count',
     ];
 
