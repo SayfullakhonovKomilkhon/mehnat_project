@@ -63,6 +63,9 @@ class ArticleResource extends JsonResource
                 $this->relationLoaded('comments') || $this->comments_count !== null,
                 fn () => $this->comments->where('status', 'approved')->count()
             ),
+            // Author and Expert commentary flags - always true for all articles
+            'has_author_comment' => true,
+            'has_expert_comment' => true,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
