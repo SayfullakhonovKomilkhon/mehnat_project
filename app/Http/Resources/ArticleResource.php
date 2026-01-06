@@ -69,7 +69,7 @@ class ArticleResource extends JsonResource
                 $this->relationLoaded('approvedExpertise') || $this->relationLoaded('expertises'),
                 fn () => $this->approvedExpertise !== null || 
                          ($this->relationLoaded('expertises') && $this->expertises->where('status', 'approved')->isNotEmpty()),
-                true // Default to true for backward compatibility
+                false // Default to false - no expertise unless explicitly loaded
             ),
             // Include expertise data if available
             'expertise' => $this->when(
