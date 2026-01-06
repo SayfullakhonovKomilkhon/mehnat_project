@@ -63,9 +63,27 @@ class ArticleResource extends JsonResource
                 $this->relationLoaded('comments') || $this->comments_count !== null,
                 fn () => $this->comments->where('status', 'approved')->count()
             ),
-            // Author and Expert commentary flags - always true for all articles
-            'has_author_comment' => true,
-            'has_expert_comment' => true,
+            // Author and Expert commentary - check for approved expertise
+            'has_author_comment' => true, // Always show mock author comment for now
+            'has_expert_comment' => $this->when(
+                $this->relationLoaded('approvedExpertise') || $this->relationLoaded('expertises'),
+                fn () => $this->approvedExpertise !== null || 
+                         ($this->relationLoaded('expertises') && $this->expertises->where('status', 'approved')->isNotEmpty()),
+                true // Default to true for backward compatibility
+            ),
+            // Include expertise data if available
+            'expertise' => $this->when(
+                $this->relationLoaded('approvedExpertise') && $this->approvedExpertise,
+                fn () => [
+                    'id' => $this->approvedExpertise->id,
+                    'expert_comment' => $this->approvedExpertise->expert_comment,
+                    'legal_references' => $this->approvedExpertise->legal_references,
+                    'court_practice' => $this->approvedExpertise->court_practice,
+                    'recommendations' => $this->approvedExpertise->recommendations,
+                    'expert_name' => $this->approvedExpertise->user?->name,
+                    'created_at' => $this->approvedExpertise->created_at?->toIso8601String(),
+                ]
+            ),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

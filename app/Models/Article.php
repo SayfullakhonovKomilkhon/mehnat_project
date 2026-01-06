@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Article extends Model
@@ -78,6 +79,22 @@ class Article extends Model
             ->where('status', 'approved')
             ->whereNull('parent_id')
             ->orderByDesc('created_at');
+    }
+
+    /**
+     * Get expertises for this article.
+     */
+    public function expertises(): HasMany
+    {
+        return $this->hasMany(Expertise::class);
+    }
+
+    /**
+     * Get approved expertise for this article.
+     */
+    public function approvedExpertise(): HasOne
+    {
+        return $this->hasOne(Expertise::class)->where('status', 'approved');
     }
 
     /**

@@ -58,6 +58,7 @@ class ArticleController extends Controller
                 'translations',
                 'chapter.translations',
                 'chapter.section.translations',
+                'approvedExpertise.user',
             ])
             ->find($id);
 
@@ -85,6 +86,7 @@ class ArticleController extends Controller
                 'translations',
                 'chapter.translations',
                 'chapter.section.translations',
+                'approvedExpertise.user',
             ])
             ->first();
 
