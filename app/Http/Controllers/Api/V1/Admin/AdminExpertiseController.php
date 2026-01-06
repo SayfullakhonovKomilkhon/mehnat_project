@@ -204,10 +204,15 @@ class AdminExpertiseController extends Controller
             return $this->error(__('messages.not_found'), 'NOT_FOUND', 404);
         }
 
+        $validated = $request->validate([
+            'rejection_reason' => 'nullable|string|max:1000',
+        ]);
+
         $oldValues = $expertise->toArray();
 
         $expertise->update([
             'status' => 'rejected',
+            'rejection_reason' => $validated['rejection_reason'] ?? null,
             'moderated_by' => $request->user()->id,
             'moderated_at' => now(),
         ]);
@@ -374,6 +379,7 @@ class AdminExpertiseController extends Controller
             'court_practice' => $expertise->court_practice,
             'recommendations' => $expertise->recommendations,
             'status' => $expertise->status,
+            'rejection_reason' => $expertise->rejection_reason,
             'user' => $expertise->relationLoaded('user') ? [
                 'id' => $expertise->user->id,
                 'name' => $expertise->user->name,

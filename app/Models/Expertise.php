@@ -30,6 +30,7 @@ class Expertise extends Model
         'court_practice',
         'recommendations',
         'status',
+        'rejection_reason',
         'moderated_by',
         'moderated_at',
     ];
