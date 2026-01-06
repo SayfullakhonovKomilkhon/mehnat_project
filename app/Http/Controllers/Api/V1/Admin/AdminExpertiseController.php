@@ -271,7 +271,7 @@ class AdminExpertiseController extends Controller
     public function articles(Request $request): JsonResponse
     {
         $locale = app()->getLocale();
-        $status = $request->get('status', 'all');
+        $statusFilter = $request->get('status', 'all');
         $user = $request->user();
 
         $articlesQuery = Article::with(['translations', 'chapter.translations', 'chapter.section.translations'])
@@ -280,12 +280,12 @@ class AdminExpertiseController extends Controller
 
         $articles = $articlesQuery->get();
 
-        // Get user's expertises
+        // Get user's expertises with full data
         $userExpertises = Expertise::where('user_id', $user->id)
-            ->pluck('status', 'article_id')
-            ->toArray();
+            ->get()
+            ->keyBy('article_id');
 
-        // Get all approved expertises
+        // Get all approved expertises (for showing expert name when completed by others)
         $approvedExpertises = Expertise::where('status', 'approved')
             ->with('user')
             ->get()
@@ -293,29 +293,41 @@ class AdminExpertiseController extends Controller
 
         $result = $articles->map(function ($article) use ($locale, $userExpertises, $approvedExpertises) {
             $translation = $article->translation($locale);
-            $userStatus = $userExpertises[$article->id] ?? null;
+            $userExpertise = $userExpertises[$article->id] ?? null;
             $approvedExpertise = $approvedExpertises[$article->id] ?? null;
 
-            $status = 'needs_expertise';
-            if ($userStatus === 'pending') {
-                $status = 'in_progress';
-            } elseif ($userStatus === 'approved' || $approvedExpertise) {
-                $status = 'completed';
+            // Return the user's expertise status, or null if no expertise
+            $expertiseStatus = $userExpertise ? $userExpertise->status : null;
+            
+            // For display purposes
+            $displayStatus = 'needs_expertise';
+            if ($userExpertise) {
+                if ($userExpertise->status === 'pending') {
+                    $displayStatus = 'in_progress';
+                } elseif ($userExpertise->status === 'approved') {
+                    $displayStatus = 'completed';
+                } elseif ($userExpertise->status === 'rejected') {
+                    $displayStatus = 'rejected';
+                }
+            } elseif ($approvedExpertise) {
+                $displayStatus = 'completed';
             }
 
             return [
                 'id' => $article->id,
                 'article_number' => $article->article_number,
                 'title' => $translation?->title,
-                'status' => $status,
+                'status' => $displayStatus,
+                'expertise_status' => $expertiseStatus,
+                'rejection_reason' => $userExpertise?->rejection_reason,
                 'has_expertise' => (bool) $approvedExpertise,
-                'expert_name' => $approvedExpertise?->user?->name,
+                'expert_name' => $approvedExpertise?->user?->name ?? $userExpertise?->user?->name,
             ];
         });
 
         // Filter by status
-        if ($status !== 'all') {
-            $result = $result->filter(fn($a) => $a['status'] === $status)->values();
+        if ($statusFilter !== 'all') {
+            $result = $result->filter(fn($a) => $a['status'] === $statusFilter)->values();
         }
 
         return $this->success($result);
@@ -345,12 +357,23 @@ class AdminExpertiseController extends Controller
     /**
      * Get expertise for specific article.
      */
-    public function forArticle(int $articleId): JsonResponse
+    public function forArticle(Request $request, int $articleId): JsonResponse
     {
+        $user = $request->user();
+        
+        // First try to get current user's expertise for this article
         $expertise = Expertise::with(['user', 'moderator'])
             ->where('article_id', $articleId)
-            ->where('status', 'approved')
+            ->where('user_id', $user->id)
             ->first();
+
+        // If not found and user is admin/moderator, get approved one
+        if (!$expertise && $user->isAdminOrModerator()) {
+            $expertise = Expertise::with(['user', 'moderator'])
+                ->where('article_id', $articleId)
+                ->where('status', 'approved')
+                ->first();
+        }
 
         if (!$expertise) {
             return $this->success(null);
