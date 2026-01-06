@@ -7,6 +7,7 @@ use App\Http\Resources\ArticleListResource;
 use App\Http\Resources\ArticleResource;
 use App\Http\Resources\CommentResource;
 use App\Models\Article;
+use App\Models\Expertise;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -128,6 +129,47 @@ class ArticleController extends Controller
                 'last_page' => $comments->lastPage(),
                 'per_page' => $comments->perPage(),
                 'total' => $comments->total(),
+            ],
+        ]);
+    }
+
+    /**
+     * Get approved expertise for an article (public endpoint).
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function expertise(int $id): JsonResponse
+    {
+        $article = Article::active()->find($id);
+
+        if (!$article) {
+            return $this->error(__('messages.not_found'), 'NOT_FOUND', 404);
+        }
+
+        $expertise = Expertise::with('user')
+            ->where('article_id', $id)
+            ->where('status', 'approved')
+            ->first();
+
+        if (!$expertise) {
+            return $this->success([
+                'hasExpertise' => false,
+                'expertise' => null,
+            ]);
+        }
+
+        return $this->success([
+            'hasExpertise' => true,
+            'expertise' => [
+                'id' => $expertise->id,
+                'expert_comment' => $expertise->expert_comment,
+                'legal_references' => $expertise->legal_references ?? [],
+                'court_practice' => $expertise->court_practice,
+                'recommendations' => $expertise->recommendations,
+                'expert_name' => $expertise->user?->name,
+                'created_at' => $expertise->created_at?->toIso8601String(),
+                'updated_at' => $expertise->updated_at?->toIso8601String(),
             ],
         ]);
     }

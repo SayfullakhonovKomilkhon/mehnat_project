@@ -70,6 +70,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/{id}', [ArticleController::class, 'show'])->where('id', '[0-9]+');
         Route::get('/number/{number}', [ArticleController::class, 'showByNumber']);
         Route::get('/{id}/comments', [ArticleController::class, 'comments'])->where('id', '[0-9]+');
+        Route::get('/{id}/expertise', [ArticleController::class, 'expertise'])->where('id', '[0-9]+');
     });
     
     // Search
