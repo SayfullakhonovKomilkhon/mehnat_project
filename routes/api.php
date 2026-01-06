@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminAnalyticsController;
 use App\Http\Controllers\Api\V1\Admin\AdminArticleController;
 use App\Http\Controllers\Api\V1\Admin\AdminChapterController;
 use App\Http\Controllers\Api\V1\Admin\AdminCommentController;
+use App\Http\Controllers\Api\V1\Admin\AdminExpertiseController;
 use App\Http\Controllers\Api\V1\Admin\AdminLogController;
 use App\Http\Controllers\Api\V1\Admin\AdminSectionController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
@@ -170,6 +171,21 @@ Route::prefix('v1')->group(function () {
                 Route::post('/{id}/approve', [AdminCommentController::class, 'approve'])->where('id', '[0-9]+');
                 Route::post('/{id}/reject', [AdminCommentController::class, 'reject'])->where('id', '[0-9]+');
                 Route::delete('/{id}', [AdminCommentController::class, 'destroy'])->where('id', '[0-9]+');
+            });
+            
+            // Expertise Management
+            Route::prefix('expertise')->group(function () {
+                Route::get('/', [AdminExpertiseController::class, 'index']);
+                Route::get('/pending', [AdminExpertiseController::class, 'pending'])->middleware('role:admin,moderator');
+                Route::get('/articles', [AdminExpertiseController::class, 'articles']);
+                Route::get('/stats', [AdminExpertiseController::class, 'stats']);
+                Route::get('/article/{articleId}', [AdminExpertiseController::class, 'forArticle'])->where('articleId', '[0-9]+');
+                Route::get('/{id}', [AdminExpertiseController::class, 'show'])->where('id', '[0-9]+');
+                Route::post('/', [AdminExpertiseController::class, 'store']);
+                Route::put('/{id}', [AdminExpertiseController::class, 'update'])->where('id', '[0-9]+');
+                Route::post('/{id}/approve', [AdminExpertiseController::class, 'approve'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
+                Route::post('/{id}/reject', [AdminExpertiseController::class, 'reject'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
+                Route::delete('/{id}', [AdminExpertiseController::class, 'destroy'])->where('id', '[0-9]+');
             });
             
             // Analytics
