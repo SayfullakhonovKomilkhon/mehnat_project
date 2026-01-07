@@ -60,8 +60,10 @@ class AdminMuallifAssignmentController extends Controller
     public function getMuallifs(): JsonResponse
     {
         $muallifs = User::whereHas('role', function ($query) {
-            $query->where('name', 'muallif');
-        })->get(['id', 'name', 'email']);
+            $query->where('slug', 'muallif');
+        })
+        ->where('is_active', true)
+        ->get(['id', 'name', 'email']);
 
         return $this->success($muallifs);
     }
