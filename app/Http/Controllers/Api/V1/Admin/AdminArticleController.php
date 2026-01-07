@@ -248,10 +248,10 @@ class AdminArticleController extends Controller
     {
         $perPage = min($request->get('per_page', 20), 100);
 
-        $articles = Article::where('is_active', false)
-            ->where('translation_status', Article::TRANSLATION_PENDING)
+        // Show all articles with pending translation status (both active and inactive)
+        $articles = Article::where('translation_status', Article::TRANSLATION_PENDING)
             ->ordered()
-            ->with(['translations', 'chapter.translations'])
+            ->with(['translations', 'chapter.translations', 'chapter.section.translations'])
             ->paginate($perPage);
 
         return $this->success([
