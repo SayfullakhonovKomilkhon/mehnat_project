@@ -59,6 +59,15 @@ class ArticleResource extends JsonResource
             'locale' => $locale,
             'translations' => $this->when(!empty($translations), $translations),
             'chapter' => new ChapterResource($this->whenLoaded('chapter')),
+            'submitted_by' => $this->submitted_by,
+            'submitted_at' => $this->submitted_at?->toIso8601String(),
+            'submitter' => $this->when(
+                $this->relationLoaded('submitter') && $this->submitter,
+                fn () => [
+                    'id' => $this->submitter->id,
+                    'name' => $this->submitter->name,
+                ]
+            ),
             'comments_count' => $this->when(
                 $this->relationLoaded('comments') || $this->comments_count !== null,
                 fn () => $this->comments->where('status', 'approved')->count()

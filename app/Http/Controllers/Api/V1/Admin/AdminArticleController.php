@@ -153,7 +153,15 @@ class AdminArticleController extends Controller
 
             $oldValues = $article->toArray();
 
-            $article->update($request->only(['chapter_id', 'article_number', 'order_number', 'is_active', 'translation_status']));
+            $updateData = $request->only(['chapter_id', 'article_number', 'order_number', 'is_active', 'translation_status']);
+            
+            // Track who submitted the article for review
+            if ($request->translation_status === 'pending' && $article->translation_status !== 'pending') {
+                $updateData['submitted_by'] = $request->user()->id;
+                $updateData['submitted_at'] = now();
+            }
+            
+            $article->update($updateData);
 
             if ($request->has('translations')) {
                 foreach ($request->translations as $locale => $data) {
@@ -251,7 +259,7 @@ class AdminArticleController extends Controller
         // Show all articles with pending translation status (both active and inactive)
         $articles = Article::where('translation_status', Article::TRANSLATION_PENDING)
             ->ordered()
-            ->with(['translations', 'chapter.translations', 'chapter.section.translations'])
+            ->with(['translations', 'chapter.translations', 'chapter.section.translations', 'submitter'])
             ->paginate($perPage);
 
         return $this->success([

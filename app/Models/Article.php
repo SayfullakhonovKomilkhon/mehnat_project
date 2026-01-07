@@ -33,6 +33,8 @@ class Article extends Model
         'is_active',
         'translation_status',
         'views_count',
+        'submitted_by',
+        'submitted_at',
     ];
 
     /**
@@ -44,6 +46,7 @@ class Article extends Model
         'is_active' => 'boolean',
         'order_number' => 'integer',
         'views_count' => 'integer',
+        'submitted_at' => 'datetime',
     ];
 
     /**
@@ -52,6 +55,14 @@ class Article extends Model
     public function chapter(): BelongsTo
     {
         return $this->belongsTo(Chapter::class);
+    }
+
+    /**
+     * Get the user who submitted this article for review.
+     */
+    public function submitter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'submitted_by');
     }
 
     /**
