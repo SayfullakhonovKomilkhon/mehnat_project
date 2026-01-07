@@ -89,11 +89,11 @@ class AdminMuallifAssignmentController extends Controller
         } elseif ($type === 'chapter') {
             $items = Chapter::with('translations')
                 ->where('is_active', true)
-                ->orderBy('chapter_number')
+                ->orderBy('order_number')
                 ->get()
                 ->map(fn($c) => [
                     'id' => $c->id,
-                    'name' => $c->chapter_number . '-bob - ' . ($c->translation($locale)?->title ?? ''),
+                    'name' => $c->order_number . '-bob - ' . ($c->translation($locale)?->title ?? ''),
                     'type' => 'chapter',
                 ]);
         } else {
@@ -244,7 +244,7 @@ class AdminMuallifAssignmentController extends Controller
                 'summary' => $translation?->summary,
                 'chapter' => $article->chapter ? [
                     'id' => $article->chapter->id,
-                    'chapter_number' => $article->chapter->chapter_number,
+                    'order_number' => $article->chapter->order_number,
                     'title' => $article->chapter->translation($locale)?->title,
                 ] : null,
                 'section' => $article->chapter?->section ? [
@@ -284,7 +284,7 @@ class AdminMuallifAssignmentController extends Controller
         if ($assignment->assignment_type === 'article' && $assignment->article) {
             $itemName = $assignment->article->article_number . ' - ' . ($assignment->article->translation($locale)?->title ?? '');
         } elseif ($assignment->assignment_type === 'chapter' && $assignment->chapter) {
-            $itemName = $assignment->chapter->chapter_number . '-bob - ' . ($assignment->chapter->translation($locale)?->title ?? '');
+            $itemName = $assignment->chapter->order_number . '-bob - ' . ($assignment->chapter->translation($locale)?->title ?? '');
         } elseif ($assignment->assignment_type === 'section' && $assignment->section) {
             $itemName = $assignment->section->translation($locale)?->title ?? "Bo'lim";
         }
