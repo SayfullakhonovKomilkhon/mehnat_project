@@ -146,7 +146,7 @@ class AdminArticleController extends Controller
             return $this->error(__('messages.not_found'), 'NOT_FOUND', 404);
         }
 
-        $this->authorize('update', $article);
+        // Authorization handled by route middleware
 
         try {
             DB::beginTransaction();

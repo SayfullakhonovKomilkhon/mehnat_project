@@ -164,7 +164,7 @@ Route::prefix('v1')->group(function () {
                 Route::post('/', [AdminArticleController::class, 'store'])->middleware('role:admin,moderator,muallif,ishchi_guruh');
                 Route::post('/{id}/approve', [AdminArticleController::class, 'approve'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
                 Route::post('/{id}/reject', [AdminArticleController::class, 'reject'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
-                Route::put('/{id}', [AdminArticleController::class, 'update'])->where('id', '[0-9]+');
+                Route::put('/{id}', [AdminArticleController::class, 'update'])->where('id', '[0-9]+')->middleware('role:admin,moderator,muallif,tarjimon,ishchi_guruh,ekspert');
                 Route::delete('/{id}', [AdminArticleController::class, 'destroy'])->where('id', '[0-9]+')->middleware('role:admin');
             });
             

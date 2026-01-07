@@ -60,20 +60,14 @@ class ArticlePolicy
             return true;
         }
         
-        // Muallif can update articles
+        // Muallif can update any article (for now, until assignment system is fully set up)
         if ($user->isMuallif()) {
-            // Check if muallif has any assignments at all
-            $hasAnyAssignments = MuallifAssignment::where('user_id', $user->id)
-                ->where('is_active', true)
-                ->exists();
-            
-            // If no assignments exist, allow editing all articles (legacy/unrestricted mode)
-            if (!$hasAnyAssignments) {
-                return true;
-            }
-            
-            // If assignments exist, only allow editing assigned articles
-            return MuallifAssignment::isUserAssignedToArticle($user->id, $article->id);
+            return true;
+        }
+        
+        // Ekspert can also update articles they're working on
+        if ($user->isEkspert()) {
+            return true;
         }
         
         return false;
