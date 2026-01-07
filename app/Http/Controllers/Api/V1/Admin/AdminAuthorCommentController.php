@@ -78,14 +78,14 @@ class AdminAuthorCommentController extends Controller
             'author_title' => 'nullable|string|max:255',
             'organization' => 'nullable|string|max:255',
             'comment_uz' => 'required|string|min:10',
-            'comment_ru' => 'nullable|string|min:10',
-            'comment_en' => 'nullable|string|min:10',
+            'comment_ru' => 'nullable|string',
+            'comment_en' => 'nullable|string',
         ]);
 
         $user = $request->user();
         
-        // Check if user is muallif
-        if (!$user->isMuallif() && !$user->isAdminOrModerator()) {
+        // Check if user has permission to add author comments
+        if (!$user->isMuallif() && !$user->isAdminOrModerator() && !$user->isEkspert()) {
             return $this->error(__('messages.unauthorized'), 'UNAUTHORIZED', 403);
         }
         
@@ -98,7 +98,7 @@ class AdminAuthorCommentController extends Controller
             return $this->error('Siz bu moddaga allaqachon sharh yozgansiz. Iltimos, uni yangilang.', 'DUPLICATE', 400);
         }
 
-        // Non-admin users get pending status
+        // Only admin/moderator get auto-approved, others need moderation
         $status = $user->isAdminOrModerator() ? 'approved' : 'pending';
 
         $comment = AuthorComment::create([
@@ -147,8 +147,8 @@ class AdminAuthorCommentController extends Controller
             'author_title' => 'nullable|string|max:255',
             'organization' => 'nullable|string|max:255',
             'comment_uz' => 'sometimes|required|string|min:10',
-            'comment_ru' => 'nullable|string|min:10',
-            'comment_en' => 'nullable|string|min:10',
+            'comment_ru' => 'nullable|string',
+            'comment_en' => 'nullable|string',
         ]);
 
         $oldValues = $comment->toArray();

@@ -196,11 +196,11 @@ Route::prefix('v1')->group(function () {
             Route::prefix('author-comments')->group(function () {
                 Route::get('/', [AdminAuthorCommentController::class, 'index']);
                 Route::get('/pending', [AdminAuthorCommentController::class, 'pending'])->middleware('role:admin,moderator');
-                Route::get('/articles', [AdminAuthorCommentController::class, 'articles'])->middleware('role:admin,moderator,muallif');
-                Route::get('/stats', [AdminAuthorCommentController::class, 'stats'])->middleware('role:admin,moderator,muallif');
+                Route::get('/articles', [AdminAuthorCommentController::class, 'articles'])->middleware('role:admin,moderator,muallif,ekspert');
+                Route::get('/stats', [AdminAuthorCommentController::class, 'stats'])->middleware('role:admin,moderator,muallif,ekspert');
                 Route::get('/article/{articleId}', [AdminAuthorCommentController::class, 'forArticle'])->where('articleId', '[0-9]+');
                 Route::get('/{id}', [AdminAuthorCommentController::class, 'show'])->where('id', '[0-9]+');
-                Route::post('/', [AdminAuthorCommentController::class, 'store'])->middleware('role:admin,moderator,muallif');
+                Route::post('/', [AdminAuthorCommentController::class, 'store'])->middleware('role:admin,moderator,muallif,ekspert');
                 Route::put('/{id}', [AdminAuthorCommentController::class, 'update'])->where('id', '[0-9]+');
                 Route::post('/{id}/approve', [AdminAuthorCommentController::class, 'approve'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
                 Route::post('/{id}/reject', [AdminAuthorCommentController::class, 'reject'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
