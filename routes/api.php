@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminChapterController;
 use App\Http\Controllers\Api\V1\Admin\AdminCommentController;
 use App\Http\Controllers\Api\V1\Admin\AdminExpertiseController;
 use App\Http\Controllers\Api\V1\Admin\AdminAuthorCommentController;
+use App\Http\Controllers\Api\V1\Admin\AdminMuallifAssignmentController;
 use App\Http\Controllers\Api\V1\Admin\AdminLogController;
 use App\Http\Controllers\Api\V1\Admin\AdminSectionController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
@@ -222,7 +223,29 @@ Route::prefix('v1')->group(function () {
                 Route::get('/{modelType}/{modelId}', [AdminLogController::class, 'forModel'])
                     ->where('modelId', '[0-9]+');
             });
+            
+            // Muallif Assignments - for muallif to see their assignments
+            Route::prefix('muallif-assignments')->group(function () {
+                Route::get('/my-assignments', [AdminMuallifAssignmentController::class, 'myAssignments'])->middleware('role:admin,muallif');
+            });
         });
+        
+        /*
+        |--------------------------------------------------------------------------
+        | Admin Only Routes for Muallif Assignments
+        |--------------------------------------------------------------------------
+        */
+        
+        Route::prefix('admin')->middleware(['role:admin', 'log.activity'])->group(function () {
+            // Muallif Assignments Management (Admin only)
+            Route::prefix('muallif-assignments')->group(function () {
+                Route::get('/', [AdminMuallifAssignmentController::class, 'index']);
+                Route::get('/muallifs', [AdminMuallifAssignmentController::class, 'getMuallifs']);
+                Route::get('/items', [AdminMuallifAssignmentController::class, 'getAssignableItems']);
+                Route::get('/stats', [AdminMuallifAssignmentController::class, 'stats']);
+                Route::post('/', [AdminMuallifAssignmentController::class, 'store']);
+                Route::delete('/{id}', [AdminMuallifAssignmentController::class, 'destroy'])->where('id', '[0-9]+');
+            });
         
         /*
         |--------------------------------------------------------------------------
