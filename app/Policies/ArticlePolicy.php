@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Article;
+use App\Models\MuallifAssignment;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
@@ -44,11 +45,38 @@ class ArticlePolicy
      */
     public function update(User $user, Article $article): bool
     {
-        // Admin, moderator, translator (for translations), author, working group can update
-        return $user->isAdminOrModerator() 
-            || $user->isTarjimon()  // Translators can update translations
-            || $user->isMuallif()   // Authors can update content
-            || $user->isIshchiGuruh(); // Working group can update structure
+        // Admin, moderator can update any article
+        if ($user->isAdminOrModerator()) {
+            return true;
+        }
+        
+        // Translators can update any article (for translations)
+        if ($user->isTarjimon()) {
+            return true;
+        }
+        
+        // Working group can update any article (for structure)
+        if ($user->isIshchiGuruh()) {
+            return true;
+        }
+        
+        // Muallif can update articles
+        if ($user->isMuallif()) {
+            // Check if muallif has any assignments at all
+            $hasAnyAssignments = MuallifAssignment::where('user_id', $user->id)
+                ->where('is_active', true)
+                ->exists();
+            
+            // If no assignments exist, allow editing all articles (legacy/unrestricted mode)
+            if (!$hasAnyAssignments) {
+                return true;
+            }
+            
+            // If assignments exist, only allow editing assigned articles
+            return MuallifAssignment::isUserAssignedToArticle($user->id, $article->id);
+        }
+        
+        return false;
     }
 
     /**

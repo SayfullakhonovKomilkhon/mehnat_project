@@ -104,7 +104,12 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function hasRole(string $slug): bool
     {
-        return $this->role->slug === $slug;
+        // Ensure role is loaded
+        if (!$this->relationLoaded('role')) {
+            $this->load('role');
+        }
+        
+        return $this->role?->slug === $slug;
     }
 
     /**
@@ -112,7 +117,12 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function hasPermission(string $permission): bool
     {
-        return $this->role->hasPermission($permission);
+        // Ensure role is loaded
+        if (!$this->relationLoaded('role')) {
+            $this->load('role');
+        }
+        
+        return $this->role?->hasPermission($permission) ?? false;
     }
 
     /**
