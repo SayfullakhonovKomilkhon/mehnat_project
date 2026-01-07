@@ -236,7 +236,14 @@ Route::prefix('v1')->group(function () {
         |--------------------------------------------------------------------------
         */
         
+        /*
+        |--------------------------------------------------------------------------
+        | Admin Only Routes - Only Admin Access
+        |--------------------------------------------------------------------------
+        */
+        
         Route::prefix('admin')->middleware(['role:admin', 'log.activity'])->group(function () {
+            
             // Muallif Assignments Management (Admin only)
             Route::prefix('muallif-assignments')->group(function () {
                 Route::get('/', [AdminMuallifAssignmentController::class, 'index']);
@@ -246,14 +253,6 @@ Route::prefix('v1')->group(function () {
                 Route::post('/', [AdminMuallifAssignmentController::class, 'store']);
                 Route::delete('/{id}', [AdminMuallifAssignmentController::class, 'destroy'])->where('id', '[0-9]+');
             });
-        
-        /*
-        |--------------------------------------------------------------------------
-        | Admin Only Routes - Only Admin Access
-        |--------------------------------------------------------------------------
-        */
-        
-        Route::prefix('admin')->middleware(['role:admin', 'log.activity'])->group(function () {
             
             // User Management
             Route::prefix('users')->group(function () {
