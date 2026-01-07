@@ -226,10 +226,9 @@ class AdminMuallifAssignmentController extends Controller
         // Get all assigned article IDs for this user
         $assignedArticleIds = MuallifAssignment::getAssignedArticleIds($user->id);
 
-        // Get articles with translations
+        // Get articles with translations (include inactive ones so muallif can see rejected articles)
         $articles = Article::with(['translations', 'chapter.translations', 'chapter.section.translations'])
             ->whereIn('id', $assignedArticleIds)
-            ->where('is_active', true)
             ->orderBy('article_number')
             ->get();
 
@@ -242,6 +241,8 @@ class AdminMuallifAssignmentController extends Controller
                 'title' => $translation?->title,
                 'content' => $translation?->content,
                 'summary' => $translation?->summary,
+                'is_active' => $article->is_active,
+                'translation_status' => $article->translation_status,
                 'chapter' => $article->chapter ? [
                     'id' => $article->chapter->id,
                     'order_number' => $article->chapter->order_number,
