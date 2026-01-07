@@ -7,6 +7,7 @@ use App\Http\Resources\ArticleListResource;
 use App\Http\Resources\ArticleResource;
 use App\Http\Resources\CommentResource;
 use App\Models\Article;
+use App\Models\AuthorComment;
 use App\Models\Expertise;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -60,6 +61,7 @@ class ArticleController extends Controller
                 'chapter.translations',
                 'chapter.section.translations',
                 'approvedExpertise.user',
+                'approvedAuthorComment.user',
             ])
             ->find($id);
 
@@ -88,6 +90,7 @@ class ArticleController extends Controller
                 'chapter.translations',
                 'chapter.section.translations',
                 'approvedExpertise.user',
+                'approvedAuthorComment.user',
             ])
             ->first();
 
@@ -170,6 +173,51 @@ class ArticleController extends Controller
                 'expert_name' => $expertise->user?->name,
                 'created_at' => $expertise->created_at?->toIso8601String(),
                 'updated_at' => $expertise->updated_at?->toIso8601String(),
+            ],
+        ]);
+    }
+
+    /**
+     * Get approved author comment for an article (public endpoint).
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function authorComment(int $id): JsonResponse
+    {
+        $article = Article::active()->find($id);
+
+        if (!$article) {
+            return $this->error(__('messages.not_found'), 'NOT_FOUND', 404);
+        }
+
+        $locale = app()->getLocale();
+
+        $authorComment = AuthorComment::with('user')
+            ->where('article_id', $id)
+            ->where('status', 'approved')
+            ->first();
+
+        if (!$authorComment) {
+            return $this->success([
+                'hasAuthorComment' => false,
+                'authorComment' => null,
+            ]);
+        }
+
+        return $this->success([
+            'hasAuthorComment' => true,
+            'authorComment' => [
+                'id' => $authorComment->id,
+                'author_name' => $authorComment->user?->name,
+                'author_title' => $authorComment->author_title,
+                'organization' => $authorComment->organization,
+                'comment' => $authorComment->getComment($locale),
+                'comment_uz' => $authorComment->comment_uz,
+                'comment_ru' => $authorComment->comment_ru,
+                'comment_en' => $authorComment->comment_en,
+                'created_at' => $authorComment->created_at?->toIso8601String(),
+                'updated_at' => $authorComment->updated_at?->toIso8601String(),
             ],
         ]);
     }

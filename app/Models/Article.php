@@ -98,6 +98,22 @@ class Article extends Model
     }
 
     /**
+     * Get author comments for this article.
+     */
+    public function authorComments(): HasMany
+    {
+        return $this->hasMany(AuthorComment::class);
+    }
+
+    /**
+     * Get approved author comment for this article.
+     */
+    public function approvedAuthorComment(): HasOne
+    {
+        return $this->hasOne(AuthorComment::class)->where('status', 'approved');
+    }
+
+    /**
      * Scope for active articles only.
      */
     public function scopeActive($query)

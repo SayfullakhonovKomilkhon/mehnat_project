@@ -63,8 +63,26 @@ class ArticleResource extends JsonResource
                 $this->relationLoaded('comments') || $this->comments_count !== null,
                 fn () => $this->comments->where('status', 'approved')->count()
             ),
-            // Author and Expert commentary - check for approved expertise
-            'has_author_comment' => true, // Always show mock author comment for now
+            // Author commentary - check for approved author comment
+            'has_author_comment' => $this->when(
+                $this->relationLoaded('approvedAuthorComment') || $this->relationLoaded('authorComments'),
+                fn () => $this->approvedAuthorComment !== null || 
+                         ($this->relationLoaded('authorComments') && $this->authorComments->where('status', 'approved')->isNotEmpty()),
+                false // Default to false - no author comment unless explicitly loaded
+            ),
+            // Include author comment data if available
+            'author_comment' => $this->when(
+                $this->relationLoaded('approvedAuthorComment') && $this->approvedAuthorComment,
+                fn () => [
+                    'id' => $this->approvedAuthorComment->id,
+                    'author_name' => $this->approvedAuthorComment->user?->name,
+                    'author_title' => $this->approvedAuthorComment->author_title,
+                    'organization' => $this->approvedAuthorComment->organization,
+                    'comment' => $this->approvedAuthorComment->getComment($locale),
+                    'created_at' => $this->approvedAuthorComment->created_at?->toIso8601String(),
+                ]
+            ),
+            // Expert commentary - check for approved expertise
             'has_expert_comment' => $this->when(
                 $this->relationLoaded('approvedExpertise') || $this->relationLoaded('expertises'),
                 fn () => $this->approvedExpertise !== null || 

@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminArticleController;
 use App\Http\Controllers\Api\V1\Admin\AdminChapterController;
 use App\Http\Controllers\Api\V1\Admin\AdminCommentController;
 use App\Http\Controllers\Api\V1\Admin\AdminExpertiseController;
+use App\Http\Controllers\Api\V1\Admin\AdminAuthorCommentController;
 use App\Http\Controllers\Api\V1\Admin\AdminLogController;
 use App\Http\Controllers\Api\V1\Admin\AdminSectionController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
@@ -71,6 +72,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/number/{number}', [ArticleController::class, 'showByNumber']);
         Route::get('/{id}/comments', [ArticleController::class, 'comments'])->where('id', '[0-9]+');
         Route::get('/{id}/expertise', [ArticleController::class, 'expertise'])->where('id', '[0-9]+');
+        Route::get('/{id}/author-comment', [ArticleController::class, 'authorComment'])->where('id', '[0-9]+');
     });
     
     // Search
@@ -187,6 +189,21 @@ Route::prefix('v1')->group(function () {
                 Route::post('/{id}/approve', [AdminExpertiseController::class, 'approve'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
                 Route::post('/{id}/reject', [AdminExpertiseController::class, 'reject'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
                 Route::delete('/{id}', [AdminExpertiseController::class, 'destroy'])->where('id', '[0-9]+');
+            });
+            
+            // Author Comments Management (Muallif sharhi)
+            Route::prefix('author-comments')->group(function () {
+                Route::get('/', [AdminAuthorCommentController::class, 'index']);
+                Route::get('/pending', [AdminAuthorCommentController::class, 'pending'])->middleware('role:admin,moderator');
+                Route::get('/articles', [AdminAuthorCommentController::class, 'articles'])->middleware('role:admin,moderator,muallif');
+                Route::get('/stats', [AdminAuthorCommentController::class, 'stats'])->middleware('role:admin,moderator,muallif');
+                Route::get('/article/{articleId}', [AdminAuthorCommentController::class, 'forArticle'])->where('articleId', '[0-9]+');
+                Route::get('/{id}', [AdminAuthorCommentController::class, 'show'])->where('id', '[0-9]+');
+                Route::post('/', [AdminAuthorCommentController::class, 'store'])->middleware('role:admin,moderator,muallif');
+                Route::put('/{id}', [AdminAuthorCommentController::class, 'update'])->where('id', '[0-9]+');
+                Route::post('/{id}/approve', [AdminAuthorCommentController::class, 'approve'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
+                Route::post('/{id}/reject', [AdminAuthorCommentController::class, 'reject'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
+                Route::delete('/{id}', [AdminAuthorCommentController::class, 'destroy'])->where('id', '[0-9]+');
             });
             
             // Analytics
