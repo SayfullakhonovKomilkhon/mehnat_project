@@ -12,7 +12,14 @@ class UpdateArticleRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->isAdminOrModerator();
+        $user = $this->user();
+        
+        // Allow all content management roles
+        return $user->isAdminOrModerator() 
+            || $user->isMuallif() 
+            || $user->isTarjimon() 
+            || $user->isIshchiGuruh()
+            || $user->isEkspert();
     }
 
     /**
