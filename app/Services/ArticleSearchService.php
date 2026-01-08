@@ -22,6 +22,32 @@ class ArticleSearchService
     {
         $locale = $locale ?? app()->getLocale();
 
+        // Check if query is a number (searching for article number)
+        $isNumericQuery = preg_match('/^\d+(-\d+)?$/', trim($query));
+
+        if ($isNumericQuery) {
+            // Search by article number
+            return Article::query()
+                ->select('articles.*')
+                ->selectRaw('1 as relevance_score')
+                ->join('article_translations as at', function ($join) use ($locale) {
+                    $join->on('articles.id', '=', 'at.article_id')
+                        ->where('at.locale', '=', $locale);
+                })
+                ->where(function ($q) use ($query) {
+                    $trimmedQuery = trim($query);
+                    // Exact match or starts with
+                    $q->where('articles.article_number', '=', $trimmedQuery)
+                      ->orWhere('articles.article_number', 'LIKE', $trimmedQuery . '-%')
+                      ->orWhere('articles.article_number', 'LIKE', $trimmedQuery . '%');
+                })
+                ->where('articles.is_active', true)
+                ->with(['translations' => fn ($q) => $q->where('locale', $locale), 'chapter.translations'])
+                ->orderByRaw("CAST(SPLIT_PART(article_number, '-', 1) AS INTEGER)")
+                ->orderByRaw("COALESCE(NULLIF(SPLIT_PART(article_number, '-', 2), ''), '0')::INTEGER")
+                ->paginate($perPage);
+        }
+
         // Sanitize query for PostgreSQL tsquery
         $sanitizedQuery = $this->sanitizeSearchQuery($query);
 
@@ -32,7 +58,11 @@ class ArticleSearchService
                 $join->on('articles.id', '=', 'at.article_id')
                     ->where('at.locale', '=', $locale);
             })
-            ->whereRaw('at.search_vector @@ plainto_tsquery(?)', [$sanitizedQuery])
+            ->where(function ($q) use ($sanitizedQuery, $query) {
+                // Full-text search OR article number match
+                $q->whereRaw('at.search_vector @@ plainto_tsquery(?)', [$sanitizedQuery])
+                  ->orWhere('articles.article_number', 'LIKE', trim($query) . '%');
+            })
             ->where('articles.is_active', true)
             ->with(['translations' => fn ($q) => $q->where('locale', $locale), 'chapter.translations'])
             ->orderByDesc('relevance_score')
@@ -50,6 +80,27 @@ class ArticleSearchService
     public function suggestions(string $query, ?string $locale = null, int $limit = 10): Collection
     {
         $locale = $locale ?? app()->getLocale();
+        $trimmedQuery = trim($query);
+        
+        // Check if query is numeric (searching for article number)
+        $isNumericQuery = preg_match('/^\d+/', $trimmedQuery);
+
+        if ($isNumericQuery) {
+            // Search by article number
+            return Article::query()
+                ->select('articles.id', 'articles.article_number')
+                ->selectRaw('at.title')
+                ->join('article_translations as at', function ($join) use ($locale) {
+                    $join->on('articles.id', '=', 'at.article_id')
+                        ->where('at.locale', '=', $locale);
+                })
+                ->where('articles.article_number', 'LIKE', $trimmedQuery . '%')
+                ->where('articles.is_active', true)
+                ->orderByRaw("CAST(SPLIT_PART(article_number, '-', 1) AS INTEGER)")
+                ->limit($limit)
+                ->get();
+        }
+
         $sanitizedQuery = $this->sanitizeSearchQuery($query);
 
         return Article::query()
@@ -59,7 +110,10 @@ class ArticleSearchService
                 $join->on('articles.id', '=', 'at.article_id')
                     ->where('at.locale', '=', $locale);
             })
-            ->whereRaw('at.search_vector @@ to_tsquery(?)', [$sanitizedQuery . ':*'])
+            ->where(function ($q) use ($sanitizedQuery, $trimmedQuery) {
+                $q->whereRaw('at.search_vector @@ to_tsquery(?)', [$sanitizedQuery . ':*'])
+                  ->orWhere('articles.article_number', 'LIKE', $trimmedQuery . '%');
+            })
             ->where('articles.is_active', true)
             ->limit($limit)
             ->get();
