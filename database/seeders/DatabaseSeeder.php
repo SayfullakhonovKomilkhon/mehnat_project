@@ -15,6 +15,8 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             AdminUserSeeder::class,
             SampleDataSeeder::class, // Sample data for sections, chapters, articles
+            LaborCodeSeeder::class, // Labor Code structure (sections, chapters, articles)
+            LaborCodeContentSeeder::class, // Full content with comments (ШАРҲ)
         ]);
     }
 }

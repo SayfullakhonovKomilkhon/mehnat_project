@@ -33,49 +33,52 @@ return new class extends Migration
             DB::table('chapters')->whereIn('id', $testChapters)->delete();
         }
         
-        // Get admin user ID (or first user)
+        // Get admin user ID (or first user) - skip if no users exist yet
         $adminId = DB::table('users')->where('email', 'admin@mehnat.uz')->value('id');
         if (!$adminId) {
-            $adminId = DB::table('users')->first()?->id ?? 1;
+            $adminId = DB::table('users')->first()?->id;
         }
         
-        // Add comments to articles
-        $articles = DB::table('articles')
-            ->where('is_active', true)
-            ->where('translation_status', 'approved')
-            ->limit(3)
-            ->get();
-        
-        $comments = [
-            "Ushbu modda Mehnat kodeksining asosiy maqsadlarini belgilaydi. Amaliyotda bu modda mehnat huquqlarini himoya qilishda muhim ahamiyatga ega. Ish beruvchilar va xodimlar o'rtasidagi munosabatlarni tartibga solishda ushbu moddaga asoslanish kerak.\n\nДанная статья определяет основные цели Трудового кодекса. На практике эта статья имеет важное значение для защиты трудовых прав.",
-            "Mehnat qonunchiligi rivojlanib bormoqda. 2023-yildagi o'zgarishlar xodimlarning huquqlarini yanada kengaytirdi. Bu modda asosida ko'plab sud qarorlari qabul qilingan.\n\nТрудовое законодательство продолжает развиваться. Изменения 2023 года еще больше расширили права работников.",
-            "Huquqshunoslik nuqtai nazaridan, bu modda konstitutsiyaviy mehnat huquqlarini amalga oshirish mexanizmini belgilaydi. Xalqaro mehnat standartlariga muvofiq keladi.\n\nС правовой точки зрения, данная статья определяет механизм реализации конституционных трудовых прав.",
-        ];
-        
-        $commentIndex = 0;
-        foreach ($articles as $article) {
-            if (isset($comments[$commentIndex])) {
-                // Check if comment already exists for this article
-                $existingComment = DB::table('comments')
-                    ->where('article_id', $article->id)
-                    ->where('user_id', $adminId)
-                    ->first();
-                    
-                if (!$existingComment) {
-                    DB::table('comments')->insert([
-                        'article_id' => $article->id,
-                        'user_id' => $adminId,
-                        'parent_id' => null,
-                        'content' => $comments[$commentIndex],
-                        'status' => 'approved',
-                        'likes_count' => rand(5, 25),
-                        'created_at' => now()->subDays(rand(1, 30)),
-                        'updated_at' => now(),
-                    ]);
-                }
-            }
+        // Only add comments if we have a valid user
+        if ($adminId) {
+            // Add comments to articles
+            $articles = DB::table('articles')
+                ->where('is_active', true)
+                ->where('translation_status', 'approved')
+                ->limit(3)
+                ->get();
             
-            $commentIndex++;
+            $comments = [
+                "Ushbu modda Mehnat kodeksining asosiy maqsadlarini belgilaydi. Amaliyotda bu modda mehnat huquqlarini himoya qilishda muhim ahamiyatga ega. Ish beruvchilar va xodimlar o'rtasidagi munosabatlarni tartibga solishda ushbu moddaga asoslanish kerak.\n\nДанная статья определяет основные цели Трудового кодекса. На практике эта статья имеет важное значение для защиты трудовых прав.",
+                "Mehnat qonunchiligi rivojlanib bormoqda. 2023-yildagi o'zgarishlar xodimlarning huquqlarini yanada kengaytirdi. Bu modda asosida ko'plab sud qarorlari qabul qilingan.\n\nТрудовое законодательство продолжает развиваться. Изменения 2023 года еще больше расширили права работников.",
+                "Huquqshunoslik nuqtai nazaridan, bu modda konstitutsiyaviy mehnat huquqlarini amalga oshirish mexanizmini belgilaydi. Xalqaro mehnat standartlariga muvofiq keladi.\n\nС правовой точки зрения, данная статья определяет механизм реализации конституционных трудовых прав.",
+            ];
+            
+            $commentIndex = 0;
+            foreach ($articles as $article) {
+                if (isset($comments[$commentIndex])) {
+                    // Check if comment already exists for this article
+                    $existingComment = DB::table('comments')
+                        ->where('article_id', $article->id)
+                        ->where('user_id', $adminId)
+                        ->first();
+                        
+                    if (!$existingComment) {
+                        DB::table('comments')->insert([
+                            'article_id' => $article->id,
+                            'user_id' => $adminId,
+                            'parent_id' => null,
+                            'content' => $comments[$commentIndex],
+                            'status' => 'approved',
+                            'likes_count' => rand(5, 25),
+                            'created_at' => now()->subDays(rand(1, 30)),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+                
+                $commentIndex++;
+            }
         }
         
         // Clear cache

@@ -23,10 +23,10 @@ class SampleDataSeeder extends Seeder
         // Create sample users
         $this->createSampleUsers();
 
-        // Create sections with chapters and articles
-        $this->createSampleContent();
+        // Skip content creation - handled by LaborCodeSeeder
+        // $this->createSampleContent();
 
-        // Create sample comments
+        // Create sample comments (will be created after LaborCodeSeeder runs)
         $this->createSampleComments();
 
         $this->command->info('Sample data created successfully!');
