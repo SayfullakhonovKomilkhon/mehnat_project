@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminArticleController;
 use App\Http\Controllers\Api\V1\Admin\AdminChapterController;
 use App\Http\Controllers\Api\V1\Admin\AdminCommentController;
 use App\Http\Controllers\Api\V1\Admin\AdminArticleCommentController;
+use App\Http\Controllers\Api\V1\Admin\AdminArticleImageController;
 use App\Http\Controllers\Api\V1\Admin\AdminLogController;
 use App\Http\Controllers\Api\V1\Admin\AdminSectionController;
 use App\Http\Controllers\Api\V1\Admin\AdminSuggestionController;
@@ -195,6 +196,12 @@ Route::prefix('v1')->group(function () {
                 Route::post('/{id}/reject', [AdminArticleController::class, 'reject'])->where('id', '[0-9]+');
                 Route::put('/{id}', [AdminArticleController::class, 'update'])->where('id', '[0-9]+');
                 Route::delete('/{id}', [AdminArticleController::class, 'destroy'])->where('id', '[0-9]+');
+                
+                // Article Images
+                Route::get('/{articleId}/images', [AdminArticleImageController::class, 'index'])->where('articleId', '[0-9]+');
+                Route::post('/{articleId}/images', [AdminArticleImageController::class, 'store'])->where('articleId', '[0-9]+');
+                Route::post('/{articleId}/images/reorder', [AdminArticleImageController::class, 'reorder'])->where('articleId', '[0-9]+');
+                Route::delete('/images/{imageId}', [AdminArticleImageController::class, 'destroy'])->where('imageId', '[0-9]+');
             });
             
             // Comments Moderation

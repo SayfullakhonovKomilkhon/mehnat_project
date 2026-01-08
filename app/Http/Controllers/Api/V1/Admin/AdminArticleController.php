@@ -60,6 +60,7 @@ class AdminArticleController extends Controller
             'chapter.translations',
             'chapter.section.translations',
             'articleComment',
+            'images',
         ])->find($id);
 
         if (!$article) {

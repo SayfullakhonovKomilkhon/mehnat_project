@@ -104,6 +104,17 @@ class ArticleResource extends JsonResource
             'has_author_comment' => $hasComment,
             'has_expert_comment' => $hasComment && $articleComment?->hasExpertContent(),
             
+            // Images
+            'images' => $this->when(
+                $this->relationLoaded('images'),
+                fn () => $this->images->map(fn ($img) => [
+                    'id' => $img->id,
+                    'url' => $img->url,
+                    'original_name' => $img->original_name,
+                    'order' => $img->order,
+                ])
+            ),
+            
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

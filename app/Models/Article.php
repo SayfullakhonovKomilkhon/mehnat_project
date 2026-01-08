@@ -101,6 +101,14 @@ class Article extends Model
     }
 
     /**
+     * Get article images.
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(ArticleImage::class)->ordered();
+    }
+
+    /**
      * Get approved article comment.
      */
     public function approvedArticleComment(): HasOne
