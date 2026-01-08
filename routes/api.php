@@ -34,6 +34,37 @@ Route::prefix('v1')->group(function () {
     
     /*
     |--------------------------------------------------------------------------
+    | Temporary Seeder Route (DELETE AFTER USE)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/run-author-expert-seeder/{secret}', function ($secret) {
+        if ($secret !== 'mehnat2026secret') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        
+        try {
+            \Artisan::call('db:seed', [
+                '--class' => 'Database\\Seeders\\AuthorExpertSeeder',
+                '--force' => true,
+            ]);
+            
+            $output = \Artisan::output();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'AuthorExpertSeeder completed',
+                'output' => $output,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    });
+    
+    /*
+    |--------------------------------------------------------------------------
     | Public Routes - No Authentication Required
     |--------------------------------------------------------------------------
     */
