@@ -33,6 +33,28 @@ Route::prefix('v1')->group(function () {
     
     /*
     |--------------------------------------------------------------------------
+    | Temporary: Run Article Comments Seeder
+    | DELETE THIS ROUTE AFTER USE!
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/run-article-comments-seeder', function () {
+        try {
+            \Artisan::call('db:seed', ['--class' => 'AuthorExpertSeeder', '--force' => true]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Article comments seeder completed',
+                'output' => \Artisan::output()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    });
+    
+    /*
+    |--------------------------------------------------------------------------
     | Public Routes - No Authentication Required
     |--------------------------------------------------------------------------
     */
