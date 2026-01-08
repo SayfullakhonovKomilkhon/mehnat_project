@@ -11,10 +11,8 @@ class StoreArticleRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // Allow admin, moderator, author, and working group to create articles
-        return $this->user()->isAdminOrModerator() 
-            || $this->user()->isMuallif() 
-            || $this->user()->isIshchiGuruh();
+        // Allow admin to create articles
+        return $this->user()->isAdmin();
     }
 
     /**
@@ -52,6 +50,12 @@ class StoreArticleRequest extends FormRequest
             'translations.en.summary' => ['nullable', 'string', 'max:1000'],
             'translations.en.keywords' => ['nullable', 'array'],
             'translations.en.keywords.*' => ['string', 'max:100'],
+
+            // Comment (optional)
+            'comment' => ['nullable', 'array'],
+            'comment.uz' => ['nullable', 'string'],
+            'comment.ru' => ['nullable', 'string'],
+            'comment.en' => ['nullable', 'string'],
         ];
     }
 

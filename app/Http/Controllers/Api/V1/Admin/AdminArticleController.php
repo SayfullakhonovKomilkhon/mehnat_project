@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\UpdateArticleRequest;
 use App\Http\Resources\ArticleResource;
 use App\Models\ActivityLog;
 use App\Models\Article;
+use App\Models\ArticleComment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -104,6 +105,18 @@ class AdminArticleController extends Controller
                     'content' => $data['content'],
                     'summary' => $data['summary'] ?? null,
                     'keywords' => $data['keywords'] ?? [],
+                ]);
+            }
+
+            // Create comment if provided
+            if ($request->has('comment') && $request->comment) {
+                $commentData = $request->comment;
+                ArticleComment::create([
+                    'article_id' => $article->id,
+                    'comment_uz' => $commentData['uz'] ?? null,
+                    'comment_ru' => $commentData['ru'] ?? null,
+                    'comment_en' => $commentData['en'] ?? null,
+                    'status' => $isAdmin ? ArticleComment::STATUS_APPROVED : ArticleComment::STATUS_PENDING,
                 ]);
             }
 
