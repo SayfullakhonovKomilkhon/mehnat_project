@@ -121,7 +121,10 @@ class Article extends Model
      */
     public function scopeOrdered($query)
     {
-        return $query->orderBy('order_number');
+        // Sort by article_number numerically (handles "1", "45", "45-1", etc.)
+        // First by the main number, then by sub-number if exists
+        return $query->orderByRaw("CAST(SPLIT_PART(article_number, '-', 1) AS INTEGER)")
+                     ->orderByRaw("COALESCE(NULLIF(SPLIT_PART(article_number, '-', 2), ''), '0')::INTEGER");
     }
 
     /**
