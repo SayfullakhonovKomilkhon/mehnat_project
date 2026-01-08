@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             SampleDataSeeder::class, // Sample data for sections, chapters, articles
             LaborCodeSeeder::class, // Labor Code structure (sections, chapters, articles)
             LaborCodeContentSeeder::class, // Full content with comments (ШАРҲ)
+            AuthorExpertSeeder::class, // Author comments and expert conclusions
         ]);
     }
 }
