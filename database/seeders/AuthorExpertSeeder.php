@@ -18,7 +18,12 @@ class AuthorExpertSeeder extends Seeder
     {
         $this->command->info('Starting Author Comments and Expertises seeder...');
         
-        $filePath = '/Users/mac/Desktop/Mehnat/mehnat_kodeksi.txt';
+        // Try relative path first (for production), then absolute (for local dev)
+        $filePath = database_path('seeders/mehnat_kodeksi.txt');
+        if (!File::exists($filePath)) {
+            // Fallback for local development
+            $filePath = '/Users/mac/Desktop/Mehnat/mehnat_kodeksi.txt';
+        }
         if (!File::exists($filePath)) {
             $this->command->error("File not found: {$filePath}");
             return;
