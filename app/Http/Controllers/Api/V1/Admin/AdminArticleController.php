@@ -59,13 +59,45 @@ class AdminArticleController extends Controller
             'translations',
             'chapter.translations',
             'chapter.section.translations',
+            'articleComment',
         ])->find($id);
 
         if (!$article) {
             return $this->error(__('messages.not_found'), 'NOT_FOUND', 404);
         }
 
-        return $this->success(new ArticleResource($article));
+        // Include raw comment data for edit form
+        $response = (new ArticleResource($article))->toArray(request());
+        
+        // Add full translations data for editing
+        $response['translations_data'] = [];
+        foreach ($article->translations as $trans) {
+            $response['translations_data'][$trans->locale] = [
+                'title' => $trans->title,
+                'content' => $trans->content,
+                'summary' => $trans->summary,
+                'keywords' => $trans->keywords,
+            ];
+        }
+        
+        // Add raw article comment data for editing
+        if ($article->articleComment) {
+            $response['article_comment'] = [
+                'id' => $article->articleComment->id,
+                'comment_uz' => $article->articleComment->comment_uz,
+                'comment_ru' => $article->articleComment->comment_ru,
+                'comment_en' => $article->articleComment->comment_en,
+                'author_name' => $article->articleComment->author_name,
+                'author_title' => $article->articleComment->author_title,
+                'organization' => $article->articleComment->organization,
+                'legal_references' => $article->articleComment->legal_references,
+                'court_practice' => $article->articleComment->court_practice,
+                'recommendations' => $article->articleComment->recommendations,
+                'status' => $article->articleComment->status,
+            ];
+        }
+
+        return $this->success($response);
     }
 
     /**
@@ -196,6 +228,24 @@ class AdminArticleController extends Controller
                     $article->translations()->updateOrCreate(
                         ['locale' => $locale],
                         $translationData
+                    );
+                }
+            }
+
+            // Handle comment update
+            if ($request->has('comment') && $request->comment) {
+                $commentData = $request->comment;
+                $hasComment = ($commentData['uz'] ?? null) || ($commentData['ru'] ?? null) || ($commentData['en'] ?? null);
+                
+                if ($hasComment) {
+                    ArticleComment::updateOrCreate(
+                        ['article_id' => $article->id],
+                        [
+                            'comment_uz' => $commentData['uz'] ?? null,
+                            'comment_ru' => $commentData['ru'] ?? null,
+                            'comment_en' => $commentData['en'] ?? null,
+                            'status' => ArticleComment::STATUS_APPROVED,
+                        ]
                     );
                 }
             }

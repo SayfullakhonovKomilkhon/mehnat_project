@@ -14,12 +14,8 @@ class UpdateArticleRequest extends FormRequest
     {
         $user = $this->user();
         
-        // Allow all content management roles
-        return $user->isAdminOrModerator() 
-            || $user->isMuallif() 
-            || $user->isTarjimon() 
-            || $user->isIshchiGuruh()
-            || $user->isEkspert();
+        // Only admin can update articles
+        return $user->isAdmin();
     }
 
     /**
@@ -65,6 +61,12 @@ class UpdateArticleRequest extends FormRequest
             'translations.en.summary' => ['nullable', 'string', 'max:1000'],
             'translations.en.keywords' => ['nullable', 'array'],
             'translations.en.keywords.*' => ['string', 'max:100'],
+
+            // Comment (optional)
+            'comment' => ['sometimes', 'array'],
+            'comment.uz' => ['nullable', 'string'],
+            'comment.ru' => ['nullable', 'string'],
+            'comment.en' => ['nullable', 'string'],
         ];
     }
 }
