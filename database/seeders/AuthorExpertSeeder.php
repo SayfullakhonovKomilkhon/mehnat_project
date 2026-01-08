@@ -5,18 +5,17 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use App\Models\User;
-use App\Models\Role;
+use App\Models\ArticleComment;
 
 class AuthorExpertSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     * Adds author comments and expert conclusions from mehnat_kodeksi.txt
+     * Adds comments from mehnat_kodeksi.txt to article_comments table
      */
     public function run(): void
     {
-        $this->command->info('Starting Author Comments and Expertises seeder...');
+        $this->command->info('Starting Article Comments seeder...');
         
         // Try relative path first (for production), then absolute (for local dev)
         $filePath = database_path('seeders/mehnat_kodeksi.txt');
@@ -29,28 +28,12 @@ class AuthorExpertSeeder extends Seeder
             return;
         }
         
-        // Get muallif and ekspert users
-        $muallifRole = Role::where('slug', 'muallif')->first();
-        $ekspertRole = Role::where('slug', 'ekspert')->first();
-        
-        $muallifUser = User::where('role_id', $muallifRole?->id)->first();
-        $ekspertUser = User::where('role_id', $ekspertRole?->id)->first();
-        
-        if (!$muallifUser || !$ekspertUser) {
-            $this->command->error("Muallif or Ekspert user not found. Please run SampleDataSeeder first.");
-            return;
-        }
-        
-        $this->command->info("Using Muallif user: {$muallifUser->name} (ID: {$muallifUser->id})");
-        $this->command->info("Using Ekspert user: {$ekspertUser->name} (ID: {$ekspertUser->id})");
-        
         $content = File::get($filePath);
         $articles = $this->parseArticles($content);
         
         $this->command->info("Found " . count($articles) . " articles with commentary");
         
-        $authorCount = 0;
-        $expertCount = 0;
+        $commentCount = 0;
         
         foreach ($articles as $articleNum => $data) {
             // Get article from database
@@ -61,177 +44,105 @@ class AuthorExpertSeeder extends Seeder
                 continue;
             }
             
-            // Add author comment (ШАРҲ)
+            // Build comment text - combine ШАРҲ and other sections
+            $commentParts = [];
+            
             if (!empty($data['sharh'])) {
-                $exists = DB::table('author_comments')
-                    ->where('article_id', $article->id)
-                    ->where('user_id', $muallifUser->id)
-                    ->exists();
-                    
-                if (!$exists) {
-                    DB::table('author_comments')->insert([
-                        'article_id' => $article->id,
-                        'user_id' => $muallifUser->id,
-                        'author_title' => 'Ҳуқуқшунослик фанлари номзоди',
-                        'organization' => 'Ўзбекистон Республикаси Адлия вазирлиги',
-                        'comment_uz' => $data['sharh'],
-                        'comment_ru' => null,
-                        'comment_en' => null,
-                        'status' => 'approved',
-                        'moderated_by' => $muallifUser->id,
-                        'moderated_at' => now(),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                    $authorCount++;
-                }
+                $commentParts[] = $data['sharh'];
             }
             
-            // Add expertise (ХАЛҚАРО СТАНДАРТЛАР, МИЛЛИЙ ҚОНУНЧИЛИК, МИСОЛЛАР)
-            $hasExpertData = !empty($data['xalqaro']) || !empty($data['milliy']) || !empty($data['misollar']);
+            if (!empty($data['misollar'])) {
+                $commentParts[] = "\n\n**МИСОЛЛАР:**\n" . $data['misollar'];
+            }
             
-            if ($hasExpertData) {
-                $exists = DB::table('expertises')
-                    ->where('article_id', $article->id)
-                    ->where('user_id', $ekspertUser->id)
-                    ->exists();
-                    
-                if (!$exists) {
-                    $legalReferences = [];
-                    if (!empty($data['xalqaro'])) {
-                        $legalReferences['international'] = $data['xalqaro'];
-                    }
-                    if (!empty($data['milliy'])) {
-                        $legalReferences['national'] = $data['milliy'];
-                    }
-                    
-                    $expertComment = "Ушбу модда бўйича экспертиза хулосаси.\n\n";
-                    if (!empty($data['xalqaro'])) {
-                        $expertComment .= "Халқаро стандартларга мувофиқлиги текширилган.\n";
-                    }
-                    if (!empty($data['milliy'])) {
-                        $expertComment .= "Миллий қонунчиликка мувофиқлиги тасдиқланган.\n";
-                    }
-                    
-                    DB::table('expertises')->insert([
-                        'article_id' => $article->id,
-                        'user_id' => $ekspertUser->id,
-                        'expert_comment' => $expertComment,
-                        'legal_references' => json_encode($legalReferences),
-                        'court_practice' => null,
-                        'recommendations' => $data['misollar'] ?? null,
-                        'status' => 'approved',
-                        'moderated_by' => $ekspertUser->id,
-                        'moderated_at' => now(),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                    $expertCount++;
-                }
+            if (!empty($data['xalqaro'])) {
+                $commentParts[] = "\n\n**ХАЛҚАРО СТАНДАРТЛАР:**\n" . $data['xalqaro'];
+            }
+            
+            if (!empty($data['milliy'])) {
+                $commentParts[] = "\n\n**МИЛЛИЙ ҚОНУНЧИЛИК:**\n" . $data['milliy'];
+            }
+            
+            $fullComment = implode('', $commentParts);
+            
+            if (empty($fullComment)) {
+                continue;
+            }
+            
+            // Check if comment already exists
+            $exists = ArticleComment::where('article_id', $article->id)->exists();
+            
+            if (!$exists) {
+                ArticleComment::create([
+                    'article_id' => $article->id,
+                    'comment_uz' => $fullComment,
+                    'comment_ru' => null,
+                    'comment_en' => null,
+                    'author_name' => 'Меҳнат кодекси шарҳи муаллифлари',
+                    'author_title' => 'Ҳуқуқшунослик фанлари номзоди',
+                    'organization' => 'Ўзбекистон Республикаси Адлия вазирлиги',
+                    'legal_references' => !empty($data['xalqaro']) || !empty($data['milliy']) ? [
+                        'international' => $data['xalqaro'] ?? null,
+                        'national' => $data['milliy'] ?? null,
+                    ] : null,
+                    'court_practice' => $data['misollar'] ?? null,
+                    'recommendations' => null,
+                    'status' => ArticleComment::STATUS_APPROVED,
+                ]);
+                $commentCount++;
+                $this->command->info("Added comment for Article {$articleNum}");
+            } else {
+                $this->command->warn("Comment for Article {$articleNum} already exists, skipping");
             }
         }
         
-        $this->command->info("Added {$authorCount} author comments");
-        $this->command->info("Added {$expertCount} expertises");
-        $this->command->info('Author Comments and Expertises seeder completed!');
+        $this->command->info("Added {$commentCount} article comments");
     }
     
     /**
-     * Parse articles from the text file
+     * Parse articles and their commentary from the text file
      */
     private function parseArticles(string $content): array
     {
         $articles = [];
-        $lines = explode("\n", $content);
         
-        $currentArticle = null;
-        $currentSection = null;
-        $buffer = '';
+        // Split by articles (N-modda pattern)
+        $pattern = '/(\d+(?:-\d+)?)-modda\./u';
+        $parts = preg_split($pattern, $content, -1, PREG_SPLIT_DELIM_CAPTURE);
         
-        foreach ($lines as $line) {
-            $trimmedLine = trim($line);
+        for ($i = 1; $i < count($parts); $i += 2) {
+            $articleNum = $parts[$i];
+            $articleContent = $parts[$i + 1] ?? '';
             
-            // Detect new article
-            if (preg_match('/^(\d+)-модда\./u', $trimmedLine, $matches)) {
-                // Save previous article data
-                if ($currentArticle && $currentSection && !empty($buffer)) {
-                    $this->saveSection($articles, $currentArticle, $currentSection, $buffer);
-                }
-                
-                $currentArticle = $matches[1];
-                $currentSection = null;
-                $buffer = '';
-                
-                if (!isset($articles[$currentArticle])) {
-                    $articles[$currentArticle] = [
-                        'sharh' => '',
-                        'misollar' => '',
-                        'xalqaro' => '',
-                        'milliy' => '',
-                    ];
-                }
-                continue;
-            }
+            $data = [
+                'sharh' => $this->extractSection($articleContent, 'ШАРҲ'),
+                'misollar' => $this->extractSection($articleContent, 'МИСОЛЛАР'),
+                'xalqaro' => $this->extractSection($articleContent, 'ХАЛҚАРО СТАНДАРТЛАР'),
+                'milliy' => $this->extractSection($articleContent, 'МИЛЛИЙ ҚОНУНЧИЛИК'),
+            ];
             
-            // Detect sections
-            if ($trimmedLine === 'ШАРҲ:' || $trimmedLine === 'ШАРҲ') {
-                if ($currentArticle && $currentSection && !empty($buffer)) {
-                    $this->saveSection($articles, $currentArticle, $currentSection, $buffer);
-                }
-                $currentSection = 'sharh';
-                $buffer = '';
-                continue;
+            // Only include if at least one section has content
+            if ($data['sharh'] || $data['misollar'] || $data['xalqaro'] || $data['milliy']) {
+                $articles[$articleNum] = $data;
             }
-            
-            if ($trimmedLine === 'МИСОЛЛАР' || $trimmedLine === 'МИСОЛЛАР:') {
-                if ($currentArticle && $currentSection && !empty($buffer)) {
-                    $this->saveSection($articles, $currentArticle, $currentSection, $buffer);
-                }
-                $currentSection = 'misollar';
-                $buffer = '';
-                continue;
-            }
-            
-            if ($trimmedLine === 'ХАЛҚАРО СТАНДАРТЛАР' || $trimmedLine === 'ХАЛҚАРО СТАНДАРТЛАР:') {
-                if ($currentArticle && $currentSection && !empty($buffer)) {
-                    $this->saveSection($articles, $currentArticle, $currentSection, $buffer);
-                }
-                $currentSection = 'xalqaro';
-                $buffer = '';
-                continue;
-            }
-            
-            if ($trimmedLine === 'МИЛЛИЙ ҚОНУНЧИЛИК' || $trimmedLine === 'МИЛЛИЙ ҚОНУНЧИЛИК:') {
-                if ($currentArticle && $currentSection && !empty($buffer)) {
-                    $this->saveSection($articles, $currentArticle, $currentSection, $buffer);
-                }
-                $currentSection = 'milliy';
-                $buffer = '';
-                continue;
-            }
-            
-            // Accumulate content for current section
-            if ($currentArticle && $currentSection) {
-                $buffer .= $line . "\n";
-            }
-        }
-        
-        // Save last article
-        if ($currentArticle && $currentSection && !empty($buffer)) {
-            $this->saveSection($articles, $currentArticle, $currentSection, $buffer);
         }
         
         return $articles;
     }
     
     /**
-     * Save section content to articles array
+     * Extract a specific section from article content
      */
-    private function saveSection(array &$articles, string $articleNum, string $section, string $content): void
+    private function extractSection(string $content, string $sectionName): ?string
     {
-        if (isset($articles[$articleNum][$section])) {
-            $articles[$articleNum][$section] = trim($content);
+        // Pattern to match section name followed by content until next section or article
+        $pattern = '/' . preg_quote($sectionName, '/') . ':\s*(.*?)(?=(?:ШАРҲ|МИСОЛЛАР|ХАЛҚАРО СТАНДАРТЛАР|МИЛЛИЙ ҚОНУНЧИЛИК):|(?:\d+(?:-\d+)?-modda\.)|$)/us';
+        
+        if (preg_match($pattern, $content, $matches)) {
+            $text = trim($matches[1]);
+            return !empty($text) ? $text : null;
         }
+        
+        return null;
     }
 }
-
