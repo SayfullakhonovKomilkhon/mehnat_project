@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\CommentController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\SectionController;
+use App\Http\Controllers\Api\V1\SuggestionController;
 use App\Http\Controllers\Api\V1\TwoFactorController;
 use App\Http\Controllers\Api\V1\Admin\AdminAnalyticsController;
 use App\Http\Controllers\Api\V1\Admin\AdminArticleController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminCommentController;
 use App\Http\Controllers\Api\V1\Admin\AdminArticleCommentController;
 use App\Http\Controllers\Api\V1\Admin\AdminLogController;
 use App\Http\Controllers\Api\V1\Admin\AdminSectionController;
+use App\Http\Controllers\Api\V1\Admin\AdminSuggestionController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use Illuminate\Support\Facades\Route;
 
@@ -104,6 +106,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/', [SearchController::class, 'search']);
         Route::get('/suggestions', [SearchController::class, 'suggestions']);
     });
+    
+    // User Suggestions (public - no auth required)
+    Route::post('/suggestions', [SuggestionController::class, 'store'])
+        ->middleware('throttle:5,1'); // Limit to 5 requests per minute
     
     // Chatbot (public)
     Route::prefix('chatbot')->group(function () {
@@ -208,6 +214,14 @@ Route::prefix('v1')->group(function () {
                 Route::post('/', [AdminArticleCommentController::class, 'store']);
                 Route::put('/{id}', [AdminArticleCommentController::class, 'update'])->where('id', '[0-9]+');
                 Route::delete('/{id}', [AdminArticleCommentController::class, 'destroy'])->where('id', '[0-9]+');
+            });
+            
+            // User Suggestions Management
+            Route::prefix('suggestions')->group(function () {
+                Route::get('/', [AdminSuggestionController::class, 'index']);
+                Route::get('/new-count', [AdminSuggestionController::class, 'newCount']);
+                Route::patch('/{id}/status', [AdminSuggestionController::class, 'updateStatus'])->where('id', '[0-9]+');
+                Route::delete('/{id}', [AdminSuggestionController::class, 'destroy'])->where('id', '[0-9]+');
             });
             
             // Analytics
