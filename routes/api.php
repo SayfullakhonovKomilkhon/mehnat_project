@@ -13,9 +13,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminAnalyticsController;
 use App\Http\Controllers\Api\V1\Admin\AdminArticleController;
 use App\Http\Controllers\Api\V1\Admin\AdminChapterController;
 use App\Http\Controllers\Api\V1\Admin\AdminCommentController;
-use App\Http\Controllers\Api\V1\Admin\AdminExpertiseController;
-use App\Http\Controllers\Api\V1\Admin\AdminAuthorCommentController;
-use App\Http\Controllers\Api\V1\Admin\AdminMuallifAssignmentController;
+use App\Http\Controllers\Api\V1\Admin\AdminArticleCommentController;
 use App\Http\Controllers\Api\V1\Admin\AdminLogController;
 use App\Http\Controllers\Api\V1\Admin\AdminSectionController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
@@ -27,41 +25,11 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | API v1 Routes for Labor Code Portal
+| Simplified: Only admin role, unified article comments
 |
 */
 
 Route::prefix('v1')->group(function () {
-    
-    /*
-    |--------------------------------------------------------------------------
-    | Temporary Seeder Route (DELETE AFTER USE)
-    |--------------------------------------------------------------------------
-    */
-    Route::get('/run-author-expert-seeder/{secret}', function ($secret) {
-        if ($secret !== 'mehnat2026secret') {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-        
-        try {
-            \Artisan::call('db:seed', [
-                '--class' => 'Database\\Seeders\\AuthorExpertSeeder',
-                '--force' => true,
-            ]);
-            
-            $output = \Artisan::output();
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'AuthorExpertSeeder completed',
-                'output' => $output,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    });
     
     /*
     |--------------------------------------------------------------------------
@@ -72,13 +40,13 @@ Route::prefix('v1')->group(function () {
     // Authentication
     Route::prefix('auth')->group(function () {
         Route::post('register', [AuthController::class, 'register'])
-            ->middleware('throttle:3,60'); // 3 per hour
+            ->middleware('throttle:3,60');
         
         Route::post('login', [AuthController::class, 'login'])
-            ->middleware('throttle:5,1'); // 5 per minute
+            ->middleware('throttle:5,1');
         
         Route::post('forgot-password', [AuthController::class, 'forgotPassword'])
-            ->middleware('throttle:3,5'); // 3 per 5 minutes
+            ->middleware('throttle:3,5');
         
         Route::post('reset-password', [AuthController::class, 'resetPassword'])
             ->middleware('throttle:5,5');
@@ -103,6 +71,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/{id}', [ArticleController::class, 'show'])->where('id', '[0-9]+');
         Route::get('/number/{number}', [ArticleController::class, 'showByNumber']);
         Route::get('/{id}/comments', [ArticleController::class, 'comments'])->where('id', '[0-9]+');
+        Route::get('/{id}/article-comment', [ArticleController::class, 'articleComment'])->where('id', '[0-9]+');
+        // Legacy routes (redirect to unified endpoint)
         Route::get('/{id}/expertise', [ArticleController::class, 'expertise'])->where('id', '[0-9]+');
         Route::get('/{id}/author-comment', [ArticleController::class, 'authorComment'])->where('id', '[0-9]+');
     });
@@ -116,7 +86,7 @@ Route::prefix('v1')->group(function () {
     // Chatbot (public)
     Route::prefix('chatbot')->group(function () {
         Route::post('/', [ChatbotController::class, 'sendMessage'])
-            ->middleware('throttle:30,1'); // 30 per minute
+            ->middleware('throttle:30,1');
         Route::post('/feedback', [ChatbotController::class, 'submitFeedback']);
     });
     
@@ -158,45 +128,45 @@ Route::prefix('v1')->group(function () {
             Route::post('/{id}/like', [CommentController::class, 'like'])->where('id', '[0-9]+');
         });
         
-        // Chatbot history (for authenticated users)
+        // Chatbot history
         Route::get('chatbot/history', [ChatbotController::class, 'history']);
         
         /*
         |--------------------------------------------------------------------------
-        | Admin Routes - Admin/Moderator Access Required
+        | Admin Routes - Admin Only
         |--------------------------------------------------------------------------
         */
         
-        Route::prefix('admin')->middleware(['role:admin,moderator,muallif,tarjimon,ishchi_guruh,ekspert', 'log.activity'])->group(function () {
+        Route::prefix('admin')->middleware(['role:admin', 'log.activity'])->group(function () {
             
             // Sections Management
             Route::prefix('sections')->group(function () {
                 Route::get('/', [AdminSectionController::class, 'index']);
                 Route::get('/{id}', [AdminSectionController::class, 'show'])->where('id', '[0-9]+');
-                Route::post('/', [AdminSectionController::class, 'store'])->middleware('role:admin,ishchi_guruh');
-                Route::put('/{id}', [AdminSectionController::class, 'update'])->where('id', '[0-9]+')->middleware('role:admin,moderator,ishchi_guruh');
-                Route::delete('/{id}', [AdminSectionController::class, 'destroy'])->where('id', '[0-9]+')->middleware('role:admin,ishchi_guruh');
+                Route::post('/', [AdminSectionController::class, 'store']);
+                Route::put('/{id}', [AdminSectionController::class, 'update'])->where('id', '[0-9]+');
+                Route::delete('/{id}', [AdminSectionController::class, 'destroy'])->where('id', '[0-9]+');
             });
             
             // Chapters Management
             Route::prefix('chapters')->group(function () {
                 Route::get('/', [AdminChapterController::class, 'index']);
                 Route::get('/{id}', [AdminChapterController::class, 'show'])->where('id', '[0-9]+');
-                Route::post('/', [AdminChapterController::class, 'store'])->middleware('role:admin,ishchi_guruh');
-                Route::put('/{id}', [AdminChapterController::class, 'update'])->where('id', '[0-9]+')->middleware('role:admin,moderator,ishchi_guruh');
-                Route::delete('/{id}', [AdminChapterController::class, 'destroy'])->where('id', '[0-9]+')->middleware('role:admin,ishchi_guruh');
+                Route::post('/', [AdminChapterController::class, 'store']);
+                Route::put('/{id}', [AdminChapterController::class, 'update'])->where('id', '[0-9]+');
+                Route::delete('/{id}', [AdminChapterController::class, 'destroy'])->where('id', '[0-9]+');
             });
             
-            // Articles Management - tarjimon can view and update (for translations)
+            // Articles Management
             Route::prefix('articles')->group(function () {
                 Route::get('/', [AdminArticleController::class, 'index']);
-                Route::get('/pending', [AdminArticleController::class, 'pending'])->middleware('role:admin,moderator');
+                Route::get('/pending', [AdminArticleController::class, 'pending']);
                 Route::get('/{id}', [AdminArticleController::class, 'show'])->where('id', '[0-9]+');
-                Route::post('/', [AdminArticleController::class, 'store'])->middleware('role:admin,moderator,muallif,ishchi_guruh');
-                Route::post('/{id}/approve', [AdminArticleController::class, 'approve'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
-                Route::post('/{id}/reject', [AdminArticleController::class, 'reject'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
-                Route::put('/{id}', [AdminArticleController::class, 'update'])->where('id', '[0-9]+')->middleware('role:admin,moderator,muallif,tarjimon,ishchi_guruh,ekspert');
-                Route::delete('/{id}', [AdminArticleController::class, 'destroy'])->where('id', '[0-9]+')->middleware('role:admin');
+                Route::post('/', [AdminArticleController::class, 'store']);
+                Route::post('/{id}/approve', [AdminArticleController::class, 'approve'])->where('id', '[0-9]+');
+                Route::post('/{id}/reject', [AdminArticleController::class, 'reject'])->where('id', '[0-9]+');
+                Route::put('/{id}', [AdminArticleController::class, 'update'])->where('id', '[0-9]+');
+                Route::delete('/{id}', [AdminArticleController::class, 'destroy'])->where('id', '[0-9]+');
             });
             
             // Comments Moderation
@@ -208,34 +178,14 @@ Route::prefix('v1')->group(function () {
                 Route::delete('/{id}', [AdminCommentController::class, 'destroy'])->where('id', '[0-9]+');
             });
             
-            // Expertise Management
-            Route::prefix('expertise')->group(function () {
-                Route::get('/', [AdminExpertiseController::class, 'index']);
-                Route::get('/pending', [AdminExpertiseController::class, 'pending'])->middleware('role:admin,moderator');
-                Route::get('/articles', [AdminExpertiseController::class, 'articles']);
-                Route::get('/stats', [AdminExpertiseController::class, 'stats']);
-                Route::get('/article/{articleId}', [AdminExpertiseController::class, 'forArticle'])->where('articleId', '[0-9]+');
-                Route::get('/{id}', [AdminExpertiseController::class, 'show'])->where('id', '[0-9]+');
-                Route::post('/', [AdminExpertiseController::class, 'store']);
-                Route::put('/{id}', [AdminExpertiseController::class, 'update'])->where('id', '[0-9]+');
-                Route::post('/{id}/approve', [AdminExpertiseController::class, 'approve'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
-                Route::post('/{id}/reject', [AdminExpertiseController::class, 'reject'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
-                Route::delete('/{id}', [AdminExpertiseController::class, 'destroy'])->where('id', '[0-9]+');
-            });
-            
-            // Author Comments Management (Muallif sharhi)
-            Route::prefix('author-comments')->group(function () {
-                Route::get('/', [AdminAuthorCommentController::class, 'index']);
-                Route::get('/pending', [AdminAuthorCommentController::class, 'pending'])->middleware('role:admin,moderator');
-                Route::get('/articles', [AdminAuthorCommentController::class, 'articles'])->middleware('role:admin,moderator,muallif,ekspert');
-                Route::get('/stats', [AdminAuthorCommentController::class, 'stats'])->middleware('role:admin,moderator,muallif,ekspert');
-                Route::get('/article/{articleId}', [AdminAuthorCommentController::class, 'forArticle'])->where('articleId', '[0-9]+');
-                Route::get('/{id}', [AdminAuthorCommentController::class, 'show'])->where('id', '[0-9]+');
-                Route::post('/', [AdminAuthorCommentController::class, 'store'])->middleware('role:admin,moderator,muallif,ekspert');
-                Route::put('/{id}', [AdminAuthorCommentController::class, 'update'])->where('id', '[0-9]+');
-                Route::post('/{id}/approve', [AdminAuthorCommentController::class, 'approve'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
-                Route::post('/{id}/reject', [AdminAuthorCommentController::class, 'reject'])->where('id', '[0-9]+')->middleware('role:admin,moderator');
-                Route::delete('/{id}', [AdminAuthorCommentController::class, 'destroy'])->where('id', '[0-9]+');
+            // Article Comments Management (unified author + expert comments)
+            Route::prefix('article-comments')->group(function () {
+                Route::get('/', [AdminArticleCommentController::class, 'index']);
+                Route::get('/{id}', [AdminArticleCommentController::class, 'show'])->where('id', '[0-9]+');
+                Route::get('/article/{articleId}', [AdminArticleCommentController::class, 'forArticle'])->where('articleId', '[0-9]+');
+                Route::post('/', [AdminArticleCommentController::class, 'store']);
+                Route::put('/{id}', [AdminArticleCommentController::class, 'update'])->where('id', '[0-9]+');
+                Route::delete('/{id}', [AdminArticleCommentController::class, 'destroy'])->where('id', '[0-9]+');
             });
             
             // Analytics
@@ -255,40 +205,10 @@ Route::prefix('v1')->group(function () {
                     ->where('modelId', '[0-9]+');
             });
             
-            // Muallif Assignments - for muallif to see their assignments
-            Route::prefix('muallif-assignments')->group(function () {
-                Route::get('/my-assignments', [AdminMuallifAssignmentController::class, 'myAssignments'])->middleware('role:admin,muallif');
-            });
-        });
-        
-        /*
-        |--------------------------------------------------------------------------
-        | Admin Only Routes for Muallif Assignments
-        |--------------------------------------------------------------------------
-        */
-        
-        /*
-        |--------------------------------------------------------------------------
-        | Admin Only Routes - Only Admin Access
-        |--------------------------------------------------------------------------
-        */
-        
-        Route::prefix('admin')->middleware(['role:admin', 'log.activity'])->group(function () {
-            
-            // Muallif Assignments Management (Admin only)
-            Route::prefix('muallif-assignments')->group(function () {
-                Route::get('/', [AdminMuallifAssignmentController::class, 'index']);
-                Route::get('/muallifs', [AdminMuallifAssignmentController::class, 'getMuallifs']);
-                Route::get('/items', [AdminMuallifAssignmentController::class, 'getAssignableItems']);
-                Route::get('/stats', [AdminMuallifAssignmentController::class, 'stats']);
-                Route::post('/', [AdminMuallifAssignmentController::class, 'store']);
-                Route::delete('/{id}', [AdminMuallifAssignmentController::class, 'destroy'])->where('id', '[0-9]+');
-            });
-            
             // User Management
             Route::prefix('users')->group(function () {
                 Route::get('/', [AdminUserController::class, 'index']);
-                Route::post('/', [AdminUserController::class, 'store']); // Create new user
+                Route::post('/', [AdminUserController::class, 'store']);
                 Route::get('/roles', [AdminUserController::class, 'roles']);
                 Route::get('/{id}', [AdminUserController::class, 'show'])->where('id', '[0-9]+');
                 Route::put('/{id}/role', [AdminUserController::class, 'updateRole'])->where('id', '[0-9]+');
@@ -298,6 +218,3 @@ Route::prefix('v1')->group(function () {
         });
     });
 });
-
-
-

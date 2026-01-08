@@ -134,51 +134,11 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Check if user is moderator.
-     */
-    public function isModerator(): bool
-    {
-        return $this->hasRole(Role::MODERATOR);
-    }
-
-    /**
-     * Check if user is admin or moderator.
+     * Check if user is admin or moderator (simplified - admin only now).
      */
     public function isAdminOrModerator(): bool
     {
-        return $this->isAdmin() || $this->isModerator();
-    }
-
-    /**
-     * Check if user is muallif (author).
-     */
-    public function isMuallif(): bool
-    {
-        return $this->hasRole(Role::MUALLIF);
-    }
-
-    /**
-     * Check if user is tarjimon (translator).
-     */
-    public function isTarjimon(): bool
-    {
-        return $this->hasRole(Role::TARJIMON);
-    }
-
-    /**
-     * Check if user is ishchi guruh (working group).
-     */
-    public function isIshchiGuruh(): bool
-    {
-        return $this->hasRole(Role::ISHCHI_GURUH);
-    }
-
-    /**
-     * Check if user is ekspert (expert).
-     */
-    public function isEkspert(): bool
-    {
-        return $this->hasRole(Role::EKSPERT);
+        return $this->isAdmin();
     }
 
     /**
@@ -186,31 +146,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function canManageContent(): bool
     {
-        return $this->isAdmin() || $this->isModerator() || $this->isIshchiGuruh();
-    }
-
-    /**
-     * Check if user can create content.
-     */
-    public function canCreateContent(): bool
-    {
-        return $this->canManageContent() || $this->isMuallif();
-    }
-
-    /**
-     * Check if user can translate content.
-     */
-    public function canTranslate(): bool
-    {
-        return $this->isAdmin() || $this->isTarjimon();
-    }
-
-    /**
-     * Check if user can add expert comments.
-     */
-    public function canAddExpertComments(): bool
-    {
-        return $this->isAdmin() || $this->isEkspert();
+        return $this->isAdmin();
     }
 
     /**

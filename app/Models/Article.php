@@ -93,35 +93,19 @@ class Article extends Model
     }
 
     /**
-     * Get expertises for this article.
+     * Get article comment (unified author + expert comment).
      */
-    public function expertises(): HasMany
+    public function articleComment(): HasOne
     {
-        return $this->hasMany(Expertise::class);
+        return $this->hasOne(ArticleComment::class);
     }
 
     /**
-     * Get approved expertise for this article.
+     * Get approved article comment.
      */
-    public function approvedExpertise(): HasOne
+    public function approvedArticleComment(): HasOne
     {
-        return $this->hasOne(Expertise::class)->where('status', 'approved');
-    }
-
-    /**
-     * Get author comments for this article.
-     */
-    public function authorComments(): HasMany
-    {
-        return $this->hasMany(AuthorComment::class);
-    }
-
-    /**
-     * Get approved author comment for this article.
-     */
-    public function approvedAuthorComment(): HasOne
-    {
-        return $this->hasOne(AuthorComment::class)->where('status', 'approved');
+        return $this->hasOne(ArticleComment::class)->where('status', 'approved');
     }
 
     /**

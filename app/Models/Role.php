@@ -11,20 +11,13 @@ class Role extends Model
     use HasFactory;
 
     /**
-     * Role slugs constants
+     * Role slugs constants (simplified - only admin and user)
      */
     public const ADMIN = 'admin';
-    public const MUALLIF = 'muallif';           // Author - writes content
-    public const TARJIMON = 'tarjimon';         // Translator
-    public const ISHCHI_GURUH = 'ishchi_guruh'; // Working Group - structure
-    public const EKSPERT = 'ekspert';           // Expert - expert comments
-    public const MODERATOR = 'moderator';       // Moderator
-    public const USER = 'user';                 // Basic user
+    public const USER = 'user';
 
     /**
      * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
      */
     protected $fillable = [
         'name',
@@ -35,8 +28,6 @@ class Role extends Model
 
     /**
      * The attributes that should be cast.
-     *
-     * @var array<string, string>
      */
     protected $casts = [
         'permissions' => 'array',
@@ -72,53 +63,10 @@ class Role extends Model
     }
 
     /**
-     * Check if this is the moderator role.
-     */
-    public function isModerator(): bool
-    {
-        return $this->slug === self::MODERATOR;
-    }
-
-    /**
      * Check if this is the user role.
      */
     public function isUser(): bool
     {
         return $this->slug === self::USER;
     }
-
-    /**
-     * Check if this is the muallif (author) role.
-     */
-    public function isMuallif(): bool
-    {
-        return $this->slug === self::MUALLIF;
-    }
-
-    /**
-     * Check if this is the tarjimon (translator) role.
-     */
-    public function isTarjimon(): bool
-    {
-        return $this->slug === self::TARJIMON;
-    }
-
-    /**
-     * Check if this is the ishchi guruh (working group) role.
-     */
-    public function isIshchiGuruh(): bool
-    {
-        return $this->slug === self::ISHCHI_GURUH;
-    }
-
-    /**
-     * Check if this is the ekspert (expert) role.
-     */
-    public function isEkspert(): bool
-    {
-        return $this->slug === self::EKSPERT;
-    }
 }
-
-
-

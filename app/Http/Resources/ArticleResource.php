@@ -44,6 +44,18 @@ class ArticleResource extends JsonResource
             }
         }
 
+        // Get article comment (unified author + expert comment)
+        $articleComment = null;
+        $hasComment = false;
+        
+        if ($this->relationLoaded('approvedArticleComment') && $this->approvedArticleComment) {
+            $hasComment = true;
+            $articleComment = $this->approvedArticleComment;
+        } elseif ($this->relationLoaded('articleComment') && $this->articleComment) {
+            $hasComment = $this->articleComment->status === 'approved';
+            $articleComment = $hasComment ? $this->articleComment : null;
+        }
+
         return [
             'id' => $this->id,
             'article_number' => $this->article_number,
@@ -72,45 +84,26 @@ class ArticleResource extends JsonResource
                 $this->relationLoaded('comments') || $this->comments_count !== null,
                 fn () => $this->comments->where('status', 'approved')->count()
             ),
-            // Author commentary - check for approved author comment
-            'has_author_comment' => $this->when(
-                $this->relationLoaded('approvedAuthorComment') || $this->relationLoaded('authorComments'),
-                fn () => $this->approvedAuthorComment !== null || 
-                         ($this->relationLoaded('authorComments') && $this->authorComments->where('status', 'approved')->isNotEmpty()),
-                false // Default to false - no author comment unless explicitly loaded
-            ),
-            // Include author comment data if available
-            'author_comment' => $this->when(
-                $this->relationLoaded('approvedAuthorComment') && $this->approvedAuthorComment,
-                fn () => [
-                    'id' => $this->approvedAuthorComment->id,
-                    'author_name' => $this->approvedAuthorComment->user?->name,
-                    'author_title' => $this->approvedAuthorComment->author_title,
-                    'organization' => $this->approvedAuthorComment->organization,
-                    'comment' => $this->approvedAuthorComment->getComment($locale),
-                    'created_at' => $this->approvedAuthorComment->created_at?->toIso8601String(),
-                ]
-            ),
-            // Expert commentary - check for approved expertise
-            'has_expert_comment' => $this->when(
-                $this->relationLoaded('approvedExpertise') || $this->relationLoaded('expertises'),
-                fn () => $this->approvedExpertise !== null || 
-                         ($this->relationLoaded('expertises') && $this->expertises->where('status', 'approved')->isNotEmpty()),
-                false // Default to false - no expertise unless explicitly loaded
-            ),
-            // Include expertise data if available
-            'expertise' => $this->when(
-                $this->relationLoaded('approvedExpertise') && $this->approvedExpertise,
-                fn () => [
-                    'id' => $this->approvedExpertise->id,
-                    'expert_comment' => $this->approvedExpertise->expert_comment,
-                    'legal_references' => $this->approvedExpertise->legal_references,
-                    'court_practice' => $this->approvedExpertise->court_practice,
-                    'recommendations' => $this->approvedExpertise->recommendations,
-                    'expert_name' => $this->approvedExpertise->user?->name,
-                    'created_at' => $this->approvedExpertise->created_at?->toIso8601String(),
-                ]
-            ),
+            
+            // Unified comment (combined author + expert)
+            'has_comment' => $hasComment,
+            'article_comment' => $this->when($articleComment, fn () => [
+                'id' => $articleComment->id,
+                'comment' => $articleComment->getComment($locale),
+                'author_name' => $articleComment->author_name,
+                'author_title' => $articleComment->author_title,
+                'organization' => $articleComment->organization,
+                'legal_references' => $articleComment->legal_references,
+                'court_practice' => $articleComment->court_practice,
+                'recommendations' => $articleComment->recommendations,
+                'has_expert_content' => $articleComment->hasExpertContent(),
+                'created_at' => $articleComment->created_at?->toIso8601String(),
+            ]),
+            
+            // Legacy fields for backwards compatibility
+            'has_author_comment' => $hasComment,
+            'has_expert_comment' => $hasComment && $articleComment?->hasExpertContent(),
+            
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
@@ -124,6 +117,3 @@ class ArticleResource extends JsonResource
         return $resource->map(fn ($item) => new static($item, false));
     }
 }
-
-
-
