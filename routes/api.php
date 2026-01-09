@@ -80,6 +80,31 @@ Route::prefix('v1')->group(function () {
     
     /*
     |--------------------------------------------------------------------------
+    | Temporary: Clean orphaned images (local storage paths)
+    | DELETE THIS ROUTE AFTER USE!
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/clean-local-images', function () {
+        try {
+            // Delete images that don't have ImageKit URLs
+            $deleted = \App\Models\ArticleImage::where('path', 'not like', 'https://ik.imagekit.io/%')
+                ->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Deleted {$deleted} local/broken images",
+                'deleted_count' => $deleted
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    });
+    
+    /*
+    |--------------------------------------------------------------------------
     | Temporary: Run Article Comments Seeder
     | DELETE THIS ROUTE AFTER USE!
     |--------------------------------------------------------------------------
