@@ -53,6 +53,7 @@ class ArticleController extends Controller
                 'chapter.translations',
                 'chapter.section.translations',
                 'approvedArticleComment',
+                'images',
             ])
             ->find($id);
 
@@ -78,6 +79,7 @@ class ArticleController extends Controller
                 'chapter.translations',
                 'chapter.section.translations',
                 'approvedArticleComment',
+                'images',
             ])
             ->first();
 
