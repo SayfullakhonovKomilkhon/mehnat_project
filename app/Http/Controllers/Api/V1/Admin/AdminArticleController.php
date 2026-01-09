@@ -443,7 +443,9 @@ class AdminArticleController extends Controller
 
         // Delete related data first
         $article->images()->forceDelete();
-        $article->articleComments()->forceDelete();
+        if ($article->articleComment) {
+            $article->articleComment()->forceDelete();
+        }
         $article->translations()->delete();
         
         // Force delete the article (permanent, not soft delete)
