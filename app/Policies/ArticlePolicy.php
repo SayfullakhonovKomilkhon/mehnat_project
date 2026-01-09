@@ -3,7 +3,6 @@
 namespace App\Policies;
 
 use App\Models\Article;
-use App\Models\MuallifAssignment;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
@@ -28,8 +27,8 @@ class ArticlePolicy
             return true;
         }
 
-        // Only admin/moderator can view inactive articles
-        return $user && $user->isAdminOrModerator();
+        // Only admin can view inactive articles
+        return $user && $user->isAdmin();
     }
 
     /**
@@ -37,7 +36,7 @@ class ArticlePolicy
      */
     public function create(User $user): bool
     {
-        return $user->isAdminOrModerator() || $user->isMuallif() || $user->isIshchiGuruh();
+        return $user->isAdmin();
     }
 
     /**
@@ -45,32 +44,8 @@ class ArticlePolicy
      */
     public function update(User $user, Article $article): bool
     {
-        // Admin, moderator can update any article
-        if ($user->isAdminOrModerator()) {
-            return true;
-        }
-        
-        // Translators can update any article (for translations)
-        if ($user->isTarjimon()) {
-            return true;
-        }
-        
-        // Working group can update any article (for structure)
-        if ($user->isIshchiGuruh()) {
-            return true;
-        }
-        
-        // Muallif can update any article (for now, until assignment system is fully set up)
-        if ($user->isMuallif()) {
-            return true;
-        }
-        
-        // Ekspert can also update articles they're working on
-        if ($user->isEkspert()) {
-            return true;
-        }
-        
-        return false;
+        // Only admin can update articles
+        return $user->isAdmin();
     }
 
     /**
@@ -98,6 +73,3 @@ class ArticlePolicy
         return $user->isAdmin();
     }
 }
-
-
-
