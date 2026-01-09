@@ -426,7 +426,13 @@ class AdminArticleController extends Controller
 
         ActivityLog::logDelete($article, 'Article deleted');
 
-        $article->delete();
+        // Delete related data first
+        $article->images()->forceDelete();
+        $article->articleComments()->forceDelete();
+        $article->translations()->delete();
+        
+        // Force delete the article (permanent, not soft delete)
+        $article->forceDelete();
 
         $this->clearCache($chapterId);
 

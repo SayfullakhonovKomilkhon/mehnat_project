@@ -350,6 +350,37 @@ Route::prefix('v1')->group(function () {
                     ->where('modelId', '[0-9]+');
             });
             
+            // Clear all content (dangerous - use carefully!)
+            Route::delete('/clear-all-content', function () {
+                try {
+                    \Illuminate\Support\Facades\DB::beginTransaction();
+                    
+                    // Delete in correct order due to foreign keys
+                    \App\Models\ArticleImage::query()->forceDelete();
+                    \App\Models\ArticleComment::query()->forceDelete();
+                    \App\Models\ArticleTranslation::query()->delete();
+                    \App\Models\Article::query()->forceDelete();
+                    \App\Models\ChapterTranslation::query()->delete();
+                    \App\Models\Chapter::query()->forceDelete();
+                    \App\Models\SectionTranslation::query()->delete();
+                    \App\Models\Section::query()->forceDelete();
+                    \App\Models\Suggestion::query()->delete();
+                    
+                    \Illuminate\Support\Facades\DB::commit();
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'All content cleared successfully'
+                    ]);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'error' => $e->getMessage()
+                    ], 500);
+                }
+            });
+            
             // User Management
             Route::prefix('users')->group(function () {
                 Route::get('/', [AdminUserController::class, 'index']);
