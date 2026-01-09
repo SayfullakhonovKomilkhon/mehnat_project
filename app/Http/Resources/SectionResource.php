@@ -28,6 +28,14 @@ class SectionResource extends JsonResource
                 $this->relationLoaded('chapters'),
                 fn () => $this->chapters->where('is_active', true)->count()
             ),
+            'articles_count' => $this->when(
+                $this->relationLoaded('chapters'),
+                fn () => $this->chapters->where('is_active', true)->sum(function ($chapter) {
+                    return $chapter->relationLoaded('articles') 
+                        ? $chapter->articles->where('is_active', true)->count()
+                        : $chapter->articles()->where('is_active', true)->count();
+                })
+            ),
             'chapters' => ChapterResource::collection($this->whenLoaded('chapters')),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
