@@ -165,8 +165,10 @@ class AdminArticleController extends Controller
             // Clear cache
             $this->clearCache($article->chapter_id);
 
-            // Log creation with moderation status
-            $logMessage = $isAdmin ? 'Article created and published' : 'Article created (pending moderation)';
+            // Log creation with article title
+            $articleTitle = $article->translation()?->title ?? '';
+            $articleNumber = $article->article_number;
+            $logMessage = "{$articleNumber}-modda: {$articleTitle}";
             ActivityLog::logCreate($article, $logMessage);
 
             $responseMessage = $isAdmin 
@@ -302,8 +304,11 @@ class AdminArticleController extends Controller
                     );
                 }
             } else {
-                // Regular update log
-                ActivityLog::logUpdate($article, $oldValues, 'Article updated');
+                // Regular update log with article title
+                $articleTitle = $article->translation()?->title ?? '';
+                $articleNumber = $article->article_number;
+                $logMessage = "{$articleNumber}-modda: {$articleTitle}";
+                ActivityLog::logUpdate($article, $oldValues, $logMessage);
             }
 
             return $this->success(
@@ -367,7 +372,10 @@ class AdminArticleController extends Controller
 
         $this->clearCache($article->chapter_id);
         
-        ActivityLog::logUpdate($article, $oldValues, 'Article approved and published');
+        $articleTitle = $article->translation()?->title ?? '';
+        $articleNumber = $article->article_number;
+        $logMessage = "{$articleNumber}-modda: {$articleTitle}";
+        ActivityLog::logUpdate($article, $oldValues, $logMessage);
 
         return $this->success(
             new ArticleResource($article->fresh()->load('translations')),
@@ -398,7 +406,10 @@ class AdminArticleController extends Controller
 
         $this->clearCache($article->chapter_id);
         
-        ActivityLog::logUpdate($article, $oldValues, 'Article rejected');
+        $articleTitleRej = $article->translation()?->title ?? '';
+        $articleNumberRej = $article->article_number;
+        $logMessageRej = "{$articleNumberRej}-modda: {$articleTitleRej}";
+        ActivityLog::logUpdate($article, $oldValues, $logMessageRej);
 
         return $this->success(
             new ArticleResource($article->fresh()->load('translations')),
@@ -424,7 +435,11 @@ class AdminArticleController extends Controller
 
         $chapterId = $article->chapter_id;
 
-        ActivityLog::logDelete($article, 'Article deleted');
+        // Log deletion with article title
+        $articleTitle = $article->translation()?->title ?? '';
+        $articleNumber = $article->article_number;
+        $logMessage = "{$articleNumber}-modda: {$articleTitle}";
+        ActivityLog::logDelete($article, $logMessage);
 
         // Delete related data first
         $article->images()->forceDelete();
