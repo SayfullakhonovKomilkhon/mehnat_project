@@ -58,6 +58,28 @@ Route::prefix('v1')->group(function () {
     
     /*
     |--------------------------------------------------------------------------
+    | Temporary: Create Storage Link
+    | DELETE THIS ROUTE AFTER USE!
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/storage-link', function () {
+        try {
+            \Artisan::call('storage:link', ['--force' => true]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Storage link created',
+                'output' => \Artisan::output()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    });
+    
+    /*
+    |--------------------------------------------------------------------------
     | Temporary: Run Article Comments Seeder
     | DELETE THIS ROUTE AFTER USE!
     |--------------------------------------------------------------------------

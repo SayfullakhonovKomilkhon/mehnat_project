@@ -31,6 +31,19 @@ class AppServiceProvider extends ServiceProvider
         // Disable wrapping of JSON resources
         JsonResource::withoutWrapping();
 
+        // Create storage link if not exists (for Render/serverless deployments)
+        $publicStoragePath = public_path('storage');
+        if (!file_exists($publicStoragePath)) {
+            try {
+                app()->make('files')->link(
+                    storage_path('app/public'),
+                    $publicStoragePath
+                );
+            } catch (\Exception $e) {
+                // Silently fail - might be on read-only filesystem
+            }
+        }
+
         // Enable strict mode in development
         Model::shouldBeStrict(!$this->app->isProduction());
 
