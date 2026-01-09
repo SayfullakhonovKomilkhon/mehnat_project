@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreArticleRequest extends FormRequest
 {
@@ -24,7 +25,13 @@ class StoreArticleRequest extends FormRequest
     {
         return [
             'chapter_id' => ['required', 'integer', 'exists:chapters,id'],
-            'article_number' => ['required', 'string', 'max:20', 'unique:articles,article_number,NULL,id,deleted_at,NULL', 'regex:/^[0-9]+(-[0-9]+)?$/'],
+            'article_number' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('articles', 'article_number')->whereNull('deleted_at'),
+                'regex:/^[0-9]+(-[0-9]+)?$/'
+            ],
             'order_number' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],
             
@@ -43,19 +50,11 @@ class StoreArticleRequest extends FormRequest
             'translations.ru.summary' => ['nullable', 'string', 'max:1000'],
             'translations.ru.keywords' => ['nullable', 'array'],
             'translations.ru.keywords.*' => ['string', 'max:100'],
-            
-            'translations.en' => ['sometimes', 'array'],
-            'translations.en.title' => ['required_with:translations.en', 'string', 'max:500'],
-            'translations.en.content' => ['required_with:translations.en', 'string'],
-            'translations.en.summary' => ['nullable', 'string', 'max:1000'],
-            'translations.en.keywords' => ['nullable', 'array'],
-            'translations.en.keywords.*' => ['string', 'max:100'],
 
             // Comment (optional)
             'comment' => ['nullable', 'array'],
             'comment.uz' => ['nullable', 'string'],
             'comment.ru' => ['nullable', 'string'],
-            'comment.en' => ['nullable', 'string'],
         ];
     }
 
@@ -74,6 +73,3 @@ class StoreArticleRequest extends FormRequest
         ];
     }
 }
-
-
-

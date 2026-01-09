@@ -54,22 +54,11 @@ class UpdateArticleRequest extends FormRequest
             'translations.ru.summary' => ['nullable', 'string', 'max:1000'],
             'translations.ru.keywords' => ['nullable', 'array'],
             'translations.ru.keywords.*' => ['string', 'max:100'],
-            
-            'translations.en' => ['sometimes', 'array'],
-            'translations.en.title' => ['required_with:translations.en', 'string', 'max:500'],
-            'translations.en.content' => ['required_with:translations.en', 'string'],
-            'translations.en.summary' => ['nullable', 'string', 'max:1000'],
-            'translations.en.keywords' => ['nullable', 'array'],
-            'translations.en.keywords.*' => ['string', 'max:100'],
 
             // Comment (optional)
             'comment' => ['sometimes', 'array'],
             'comment.uz' => ['nullable', 'string'],
             'comment.ru' => ['nullable', 'string'],
-            'comment.en' => ['nullable', 'string'],
         ];
     }
 }
-
-
-
