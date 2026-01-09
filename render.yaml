@@ -61,7 +61,7 @@ services:
       - key: SESSION_DOMAIN
         sync: false
       - key: SEED_DATABASE
-        value: "true"  # Установите "false" после первого деплоя
+        value: "false"  # ВАЖНО: Установите "true" только для первоначального заполнения БД
 
 databases:
   # PostgreSQL Database
