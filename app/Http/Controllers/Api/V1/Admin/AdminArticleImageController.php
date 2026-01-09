@@ -7,11 +7,28 @@ use App\Models\Article;
 use App\Models\ArticleImage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use ImageKit\ImageKit;
 use Illuminate\Support\Str;
 
 class AdminArticleImageController extends Controller
 {
+    private ?ImageKit $imageKit = null;
+
+    /**
+     * Get ImageKit instance (lazy loaded)
+     */
+    private function getImageKit(): ImageKit
+    {
+        if ($this->imageKit === null) {
+            $this->imageKit = new ImageKit(
+                env('IMAGEKIT_PUBLIC_KEY'),
+                env('IMAGEKIT_PRIVATE_KEY'),
+                env('IMAGEKIT_URL_ENDPOINT')
+            );
+        }
+        return $this->imageKit;
+    }
+
     /**
      * Get all images for an article.
      */
@@ -23,11 +40,11 @@ class AdminArticleImageController extends Controller
             return $this->error(__('messages.not_found'), 'NOT_FOUND', 404);
         }
 
-        $images = $article->images()->get()->map(fn ($img) => [
+        $images = $article->images()->ordered()->get()->map(fn ($img) => [
             'id' => $img->id,
             'filename' => $img->filename,
             'original_name' => $img->original_name,
-            'url' => $img->url,
+            'url' => $img->path,
             'size' => $img->human_size,
             'order' => $img->order,
         ]);
@@ -48,7 +65,7 @@ class AdminArticleImageController extends Controller
 
         $request->validate([
             'images' => 'required|array|min:1',
-            'images.*' => 'required|image|mimes:jpeg,png,gif,webp|max:5120', // 5MB
+            'images.*' => 'required|image|mimes:jpeg,png,gif,webp|max:5120',
         ]);
 
         $uploadedImages = [];
@@ -56,27 +73,48 @@ class AdminArticleImageController extends Controller
 
         foreach ($request->file('images') as $file) {
             $currentOrder++;
-            $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('article-images/' . $articleId, $filename, 'public');
+            $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            
+            try {
+                // Upload to ImageKit
+                $uploadResult = $this->getImageKit()->uploadFile([
+                    'file' => base64_encode(file_get_contents($file->getRealPath())),
+                    'fileName' => $fileName,
+                    'folder' => '/mehnat/articles/' . $articleId,
+                    'useUniqueFileName' => false,
+                ]);
 
-            $image = ArticleImage::create([
-                'article_id' => $articleId,
-                'filename' => $filename,
-                'original_name' => $file->getClientOriginalName(),
-                'path' => $path,
-                'mime_type' => $file->getMimeType(),
-                'size' => $file->getSize(),
-                'order' => $currentOrder,
-            ]);
+                if (!isset($uploadResult->result->url)) {
+                    continue; // Skip failed uploads
+                }
 
-            $uploadedImages[] = [
-                'id' => $image->id,
-                'filename' => $image->filename,
-                'original_name' => $image->original_name,
-                'url' => $image->url,
-                'size' => $image->human_size,
-                'order' => $image->order,
-            ];
+                $image = ArticleImage::create([
+                    'article_id' => $articleId,
+                    'filename' => $uploadResult->result->fileId,
+                    'original_name' => $file->getClientOriginalName(),
+                    'path' => $uploadResult->result->url,
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                    'order' => $currentOrder,
+                ]);
+
+                $uploadedImages[] = [
+                    'id' => $image->id,
+                    'filename' => $image->filename,
+                    'original_name' => $image->original_name,
+                    'url' => $image->path,
+                    'size' => $image->human_size,
+                    'order' => $image->order,
+                ];
+            } catch (\Exception $e) {
+                // Log error but continue with other images
+                \Log::error('ImageKit upload failed: ' . $e->getMessage());
+                continue;
+            }
+        }
+
+        if (empty($uploadedImages)) {
+            return $this->error(__('messages.upload_failed'), 'UPLOAD_FAILED', 500);
         }
 
         return $this->success([
@@ -96,9 +134,14 @@ class AdminArticleImageController extends Controller
             return $this->error(__('messages.not_found'), 'NOT_FOUND', 404);
         }
 
-        // Delete file from storage
-        if (Storage::disk('public')->exists($image->path)) {
-            Storage::disk('public')->delete($image->path);
+        // Delete from ImageKit
+        if ($image->filename) {
+            try {
+                $this->getImageKit()->deleteFile($image->filename);
+            } catch (\Exception $e) {
+                // Log but continue - file might not exist in ImageKit
+                \Log::warning('ImageKit delete failed: ' . $e->getMessage());
+            }
         }
 
         $image->delete();
@@ -125,4 +168,3 @@ class AdminArticleImageController extends Controller
         return $this->success(['message' => __('messages.updated')]);
     }
 }
-
