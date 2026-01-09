@@ -105,6 +105,40 @@ Route::prefix('v1')->group(function () {
     
     /*
     |--------------------------------------------------------------------------
+    | Temporary: Delete all articles except article #1
+    | DELETE THIS ROUTE AFTER USE!
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/delete-articles-except-first', function () {
+        try {
+            // Delete article images for articles being deleted
+            $articlesToDelete = \App\Models\Article::where('article_number', '!=', '1')->pluck('id');
+            \App\Models\ArticleImage::whereIn('article_id', $articlesToDelete)->delete();
+            
+            // Delete article comments for articles being deleted
+            \App\Models\ArticleComment::whereIn('article_id', $articlesToDelete)->delete();
+            
+            // Delete article translations for articles being deleted
+            \App\Models\ArticleTranslation::whereIn('article_id', $articlesToDelete)->delete();
+            
+            // Delete articles except article #1
+            $deleted = \App\Models\Article::where('article_number', '!=', '1')->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Deleted {$deleted} articles (kept article #1)",
+                'deleted_count' => $deleted
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    });
+    
+    /*
+    |--------------------------------------------------------------------------
     | Temporary: Run Article Comments Seeder
     | DELETE THIS ROUTE AFTER USE!
     |--------------------------------------------------------------------------
