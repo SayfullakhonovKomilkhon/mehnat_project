@@ -80,6 +80,54 @@ Route::prefix('v1')->group(function () {
     
     /*
     |--------------------------------------------------------------------------
+    | Temporary: Create Test Logs
+    | DELETE THIS ROUTE AFTER USE!
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/create-test-logs', function () {
+        try {
+            $admin = \App\Models\User::whereHas('role', function ($q) {
+                $q->where('slug', 'admin');
+            })->first();
+            
+            if (!$admin) {
+                return response()->json(['success' => false, 'error' => 'Admin not found'], 404);
+            }
+            
+            // Create some test activity logs
+            $actions = [
+                ['action' => 'login', 'description' => 'Tizimga kirdi'],
+                ['action' => 'create', 'description' => 'Modda yaratildi'],
+                ['action' => 'update', 'description' => 'Modda yangilandi'],
+            ];
+            
+            foreach ($actions as $action) {
+                \App\Models\ActivityLog::create([
+                    'user_id' => $admin->id,
+                    'action' => $action['action'],
+                    'model_type' => \App\Models\User::class,
+                    'model_id' => $admin->id,
+                    'description' => $action['description'],
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                ]);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Test logs created successfully',
+                'count' => count($actions)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    });
+    
+    /*
+    |--------------------------------------------------------------------------
     | Temporary: Clean orphaned images (local storage paths)
     | DELETE THIS ROUTE AFTER USE!
     |--------------------------------------------------------------------------
