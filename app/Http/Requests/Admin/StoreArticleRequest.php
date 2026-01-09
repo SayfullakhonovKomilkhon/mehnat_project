@@ -24,8 +24,8 @@ class StoreArticleRequest extends FormRequest
     {
         return [
             'chapter_id' => ['required', 'integer', 'exists:chapters,id'],
-            'article_number' => ['required', 'string', 'max:20', 'unique:articles,article_number', 'regex:/^[0-9]+(-[0-9]+)?$/'],
-            'order_number' => ['required', 'integer', 'min:0'],
+            'article_number' => ['required', 'string', 'max:20', 'unique:articles,article_number,NULL,id,deleted_at,NULL', 'regex:/^[0-9]+(-[0-9]+)?$/'],
+            'order_number' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],
             
             // Translations (at least Uzbek required)

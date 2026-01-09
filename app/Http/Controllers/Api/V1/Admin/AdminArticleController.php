@@ -122,10 +122,17 @@ class AdminArticleController extends Controller
             $isActive = $isAdmin ? $request->get('is_active', true) : false;
             $translationStatus = $isAdmin ? Article::TRANSLATION_APPROVED : Article::TRANSLATION_PENDING;
 
+            // Auto-assign order_number if not provided
+            $orderNumber = $request->order_number;
+            if (!$orderNumber) {
+                $maxOrder = Article::where('chapter_id', $request->chapter_id)->max('order_number');
+                $orderNumber = ($maxOrder ?? 0) + 1;
+            }
+
             $article = Article::create([
                 'chapter_id' => $request->chapter_id,
                 'article_number' => $request->article_number,
-                'order_number' => $request->order_number,
+                'order_number' => $orderNumber,
                 'is_active' => $isActive,
                 'translation_status' => $translationStatus,
             ]);

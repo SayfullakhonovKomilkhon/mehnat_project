@@ -34,7 +34,7 @@ class UpdateArticleRequest extends FormRequest
                 'string',
                 'max:20',
                 'regex:/^[0-9]+(-[0-9]+)?$/',
-                Rule::unique('articles', 'article_number')->ignore($articleId),
+                Rule::unique('articles', 'article_number')->ignore($articleId)->whereNull('deleted_at'),
             ],
             'order_number' => ['sometimes', 'integer', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],
