@@ -172,9 +172,7 @@ class ArticleController extends Controller
     public function expertise(int $id): JsonResponse
     {
         return $this->articleComment($id);
-    }
-
-    /**
+    }    /**
      * Legacy: Get author comment (redirects to articleComment).
      */
     public function authorComment(int $id): JsonResponse

@@ -40,16 +40,16 @@ class StoreArticleRequest extends FormRequest
             'translations.uz' => ['required', 'array'],
             'translations.uz.title' => ['required', 'string', 'max:500'],
             'translations.uz.content' => ['required', 'string'],
-            'translations.uz.summary' => ['nullable', 'string', 'max:1000'],
+            'translations.uz.summary' => ['nullable', 'string'],
             'translations.uz.keywords' => ['nullable', 'array'],
-            'translations.uz.keywords.*' => ['string', 'max:100'],
+            'translations.uz.keywords.*' => ['string'],
             
             'translations.ru' => ['sometimes', 'array'],
             'translations.ru.title' => ['required_with:translations.ru', 'string', 'max:500'],
             'translations.ru.content' => ['required_with:translations.ru', 'string'],
-            'translations.ru.summary' => ['nullable', 'string', 'max:1000'],
+            'translations.ru.summary' => ['nullable', 'string'],
             'translations.ru.keywords' => ['nullable', 'array'],
-            'translations.ru.keywords.*' => ['string', 'max:100'],
+            'translations.ru.keywords.*' => ['string'],
 
             // Comment (optional)
             'comment' => ['nullable', 'array'],
